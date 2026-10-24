@@ -1,79 +1,145 @@
+
 {
-    "$schema": "https://vega.github.io/schema/vega/v5.json",
-    "width": 500,
-    "height": 200,
-    "padding": 5,
-  
+  "$schema": "https://vega.github.io/schema/vega/v5.json",
+  "width": 700,
+  "height": 700,
+  "padding": 20,
+  "autosize": "none",
+
   "signals": [
-      {
-        "name": "startAngle", "value": -2.5,
-        "bind": {"input": "range", "min": -2.5, "max": 6.29, "step": 0.01}
+    {
+      "name": "startAngle",
+      "value": -2.5
+    },
+    {
+      "name": "endAngle",
+      "value": 2.5
       },
-      {
-        "name": "endAngle", "value": 2.5,
-        "bind": {"input": "range", "min": -6.29, "max": 6.29, "step": 0.01}
-      },
-      {
-        "name": "padAngle", "value": 0,
-        "bind": {"input": "range", "min": 0, "max": 0.1}
-      },
-      {
-        "name": "bandPadding", "value": 0.15,
-        "bind": {"input": "range", "min": 0, "max": 1}
-      },
-      {
-        "name": "innerRadius", "value": 60,
-        "bind": {"input": "range", "min": 0, "max": 90, "step": 1}
-      },
-      {
-        "name": "cornerRadius", "value": 0,
-        "bind": {"input": "range", "min": 0, "max": 10, "step": 0.5}
-      }
-    ],
-  
-    "data":{
-        "url": "
-      },
-  
-     "scales": [
-      {
-        "name": "chbands",
-        "type": "band",
-        "paddingInner": { "signal": "bandPadding" },
-        "range": [{ "signal": "innerRadius" }, { "signal": "width / 2 - 10" }],
-        "domain": {"data": "table", "field": "ch"}
-      },
-      {
-        "name": "angle",
-        "type": "linear",
-        "range": [{ "signal": "startAngle"}, { "signal": "endAngle"}],
-        "nice": true, "zero": true,
-        "domain": {"data": "table", "field": "r1"}
-      }
-    ],
-  
-    "marks": [
-      {
-        "type": "arc",
-        "from": {"data": "table"},
-        "encode": {
-          "enter": {
-            "x": {"signal": "width / 2"},
-            "y": {"signal": "height / 2"}
-          },
-          "update": {
-            "fill": {"field": "c"},
-            "startAngle": { "scale": "angle", "field": "r0"},
-            "endAngle": { "scale": "angle", "field": "r1"},
-            "padAngle": {"signal": "padAngle"},
-            "innerRadius": { "scale": "chbands", "field": "ch" },
-            "outerRadius": { "scale": "chbands", "field": "ch", "offset": { "scale": "chbands", "band": 1 } },
-            "cornerRadius": {"signal": "cornerRadius"},
-            "tooltip": { "signal": "'Ch'+datum.ch+'  '+datum.key+'  '+datum.value+'%'" }
-          }
+    {
+      "name": "padAngle",
+      "value": 0
+    },
+    {
+      "name": "bandPadding",
+      "value": 0.15
+    },
+    {
+      "name": "innerRadius",
+      "value": 60
+    },
+    {
+      "name": "cornerRadius",
+      "value": 0
+    }
+  ],
+
+  "data": [
+    {
+      "name": "table",
+      "url": "https://raw.githubusercontent.com/kyledeocampo/FIT3179-Australian-Marine-Life/main/data/AML%20-%20Current%20Population%20of%20Whale%20Species%20in%20Australia.csv",
+      "format": {
+        "type": "csv",
+        "parse": {
+          "Population": "number"
         }
       }
-    ]
-  }
+    }
+  ],
   
-  
+  "scales": [
+    {
+      "name": "radius",
+      "type": "band",
+      "domain": {
+        "data": "table",
+        "field": "Name"
+      },
+      "range": [
+        {"signal": "innerRadius"},
+        {"signal": "width / 2 - 20"}
+      ],
+      "paddingInner": {"signal": "bandPadding"},
+      "paddingOuter": 0
+    },
+    {
+      "name": "population",
+      "type": "linear",
+      "domain": [0, 96000],
+      "range": [
+        {"signal": "startAngle"},
+        {"signal": "endAngle"}
+      ],
+      "zero": true,
+      "nice": false
+    }
+  ],
+
+  "marks": [
+    {
+      "type": "arc",
+      "name": "backgroundRings",
+      "from": {"data": "table"},
+      "encode": {
+        "enter": {
+          "x": {"signal": "width / 2"},
+          "y": {"signal": "height / 2"},
+          "fill": {"value": "#cccccc"},
+          "stroke": {"value": "white"},
+          "strokeWidth": {"value": 2}
+        },
+        "update": {
+          "startAngle": {"signal": "startAngle"},
+          "endAngle": {"signal": "endAngle"},
+          "innerRadius": {
+            "scale": "radius",
+            "field": "Name"
+          },
+          "outerRadius": {
+            "signal": "scale('radius', datum.Name) + bandwidth('radius')"
+          },
+          "padAngle": {"signal": "padAngle"},
+          "cornerRadius": {"signal": "cornerRadius"}
+        }
+      }
+    },
+    {
+      "type": "arc",
+      "name": "populationBars",
+      "from": {"data": "table"},
+      "encode": {
+        "enter": {
+          "x": {"signal": "width / 2"},
+          "y": {"signal": "height / 2"},
+          "fill": {
+            "signal": "datum.Population < 1000 ? '#ff0000' : '#008000'"
+          },
+          "stroke": {"value": "white"},
+          "strokeWidth": {"value": 1},
+          "tooltip": {
+            "signal": "{'Whale species': datum.Name, 'Population': format(datum.Population, ',')}"
+          }
+        },
+        "update": {
+          "startAngle": {"signal": "startAngle"},
+          "endAngle": {
+            "scale": "population",
+            "field": "Population"
+          },
+          "innerRadius": {
+            "scale": "radius",
+            "field": "Name"
+          },
+          "outerRadius": {
+            "signal": "scale('radius', datum.Name) + bandwidth('radius')"
+          },
+          "padAngle": {"signal": "padAngle"},
+          "cornerRadius": {"signal": "cornerRadius"}
+        },
+        "hover": {
+          "stroke": {"value": "#222222"},
+          "strokeWidth": {"value": 2}
+        }
+      }
+    }
+  ]
+}

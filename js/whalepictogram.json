@@ -1,0 +1,35 @@
+
+{
+    "$schema": "https://vega.github.io/schema/vega/v5.json",
+    "width": 700,
+    "height": 700,
+    "padding": 20,
+    "autosize": "none",
+
+    "data": [
+      {
+        "name": "table",
+        "values": [
+          {"Name": "North Atlantic Right Whales", "Population": 360},
+          {"Name": "North Pacific Right Whales", "Population": 400},
+          {"Name": "Southern Right Whales", "Population": 14000},
+          {"Name": "North Atlantic Blue Whales", "Population": 3000},
+          {"Name": "North Pacific Blue Whales", "Population": 2000},
+          {"Name": "Southern Hemisphere Blue Whales", "Population": 2000},
+          {"Name": "North Atlantic Fin Whales", "Population": 74000},
+          {"Name": "North Atlantic Sperm Whales", "Population": 27000},
+          {"Name": "North Pacific Sperm Whales", "Population": 10000},
+          {"Name": "Southern Hemisphere Sperm Whales", "Population": 8500},
+          {"Name": "Gray Whales", "Population": 20000},
+          {"Name": "Bryde's Whales", "Population": 41000},
+          {"Name": "North Atlantic Sei Whales", "Population": 6300},
+          {"Name": "North Pacific Sei Whales", "Population": 30000},
+          {"Name": "Southern Hemisphere Sei Whales", "Population": 700},
+          {"Name": "North Atlantic Humpback Whales", "Population": 37000},
+          {"Name": "North Pacific Humpback Whales", "Population": 22000},
+          {"Name": "Southern Hemisphere Humpback Whales", "Population": 96000},
+          {"Name": "Bowhead Whales", "Population": 14000}
+        ]
+      }
+    ]
+}

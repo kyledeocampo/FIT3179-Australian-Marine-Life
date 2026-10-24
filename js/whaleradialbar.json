@@ -7,45 +7,28 @@
   "autosize": "none",
 
   "signals": [
-    {
-      "name": "startAngle",
-      "value": -2.5
-    },
-    {
-      "name": "endAngle",
-      "value": 2.5
-      },
-    {
-      "name": "padAngle",
-      "value": 0
-    },
-    {
-      "name": "bandPadding",
-      "value": 0.15
-    },
-    {
-      "name": "innerRadius",
-      "value": 60
-    },
-    {
-      "name": "cornerRadius",
-      "value": 0
-    }
+    {"name": "startAngle", "value": -2.5},
+    {"name": "endAngle", "value": 2.5},
+    {"name": "padAngle", "value": 0},
+    {"name": "bandPadding", "value": 0.15},
+    {"name": "innerRadius", "value": 60},
+    {"name": "cornerRadius", "value": 0}
   ],
 
   "data": [
     {
       "name": "table",
-      "url": "https://raw.githubusercontent.com/kyledeocampo/FIT3179-Australian-Marine-Life/main/data/AML%20-%20Current%20Population%20of%20Whale%20Species%20in%20Australia.csv",
-      "format": {
+      "url": "https://raw.githubusercontent.com/kyledeocampo/FIT3179-Australian-Marine-Life/refs/heads/main/data/AML%20-%20Current%20Population%20of%20Whale%20Species%20in%20Australia.csv",
+      "format":{
         "type": "csv",
         "parse": {
+          "Name": "string",
           "Population": "number"
         }
       }
     }
   ],
-  
+
   "scales": [
     {
       "name": "radius",
@@ -90,12 +73,11 @@
         "update": {
           "startAngle": {"signal": "startAngle"},
           "endAngle": {"signal": "endAngle"},
-          "innerRadius": {
-            "scale": "radius",
-            "field": "Name"
-          },
+          "innerRadius": {"scale": "radius", "field": "Name"},
           "outerRadius": {
-            "signal": "scale('radius', datum.Name) + bandwidth('radius')"
+            "scale": "radius",
+            "field": "Name",
+            "band": 1
           },
           "padAngle": {"signal": "padAngle"},
           "cornerRadius": {"signal": "cornerRadius"}
@@ -110,9 +92,6 @@
         "enter": {
           "x": {"signal": "width / 2"},
           "y": {"signal": "height / 2"},
-          "fill": {
-            "signal": "datum.Population < 1000 ? '#ff0000' : '#008000'"
-          },
           "stroke": {"value": "white"},
           "strokeWidth": {"value": 1},
           "tooltip": {
@@ -120,17 +99,19 @@
           }
         },
         "update": {
+          "fill": {
+            "signal": "datum.Population < 1000 ? '#ff0000' : '#008000'"
+          },
           "startAngle": {"signal": "startAngle"},
           "endAngle": {
             "scale": "population",
             "field": "Population"
           },
-          "innerRadius": {
-            "scale": "radius",
-            "field": "Name"
-          },
+          "innerRadius": {"scale": "radius", "field": "Name"},
           "outerRadius": {
-            "signal": "scale('radius', datum.Name) + bandwidth('radius')"
+            "scale": "radius",
+            "field": "Name",
+            "band": 1
           },
           "padAngle": {"signal": "padAngle"},
           "cornerRadius": {"signal": "cornerRadius"}

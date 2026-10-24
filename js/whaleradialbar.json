@@ -18,7 +18,7 @@
   "data": [
     {
       "name": "table",
-      "url": "https://raw.githubusercontent.com/kyledeocampo/FIT3179-Australian-Marine-Life/refs/heads/main/data/AML%20-%20Current%20Population%20of%20Whale%20Species%20in%20Australia.csv",
+      "url": "https://raw.githubusercontent.com/kyledeocampo/FIT3179-Australian-Marine-Life/refs/heads/main/data/AML%20-%20Current%20Population%20of%20Whale%20Species%20in%20Australia.csv",      
       "format":{
         "type": "csv",
         "parse": {

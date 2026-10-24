@@ -1,7 +1,7 @@
-Species,Length (m),Height (m),Weight (metric tons)
-Humpback Whales,16,3,36
-Southern Right Whales,18,3.9,80
-Blue Whales,30,5,200
-Sperm Whales,16,3.4,45
-Average Human,0.4,1.756,0.087
-Toyota Corolla,4.63,1.46,1.5
+Species,Length (m),Height (m),Weight (metric tons),url
+Humpback Whales,16,3,36,images/whale-silhouette.png
+Southern Right Whales,18,3.9,80,images/whale-silhouette.png
+Blue Whales,30,5,200,images/whale-silhouette.png
+Sperm Whales,16,3.4,45,images/whale-silhouette.png
+Average Human,0.4,1.756,0.087,images/person-silhouette.png
+Toyota Corolla,4.63,1.46,1.5,images/car-silhouette.png

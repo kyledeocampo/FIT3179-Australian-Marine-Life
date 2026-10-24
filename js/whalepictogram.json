@@ -4,32 +4,141 @@
     "width": 700,
     "height": 700,
     "padding": 20,
-    "autosize": "none",
-
+    "autosize": "fit",
+  
     "data": [
       {
         "name": "table",
-        "values": [
-          {"Name": "North Atlantic Right Whales", "Population": 360},
-          {"Name": "North Pacific Right Whales", "Population": 400},
-          {"Name": "Southern Right Whales", "Population": 14000},
-          {"Name": "North Atlantic Blue Whales", "Population": 3000},
-          {"Name": "North Pacific Blue Whales", "Population": 2000},
-          {"Name": "Southern Hemisphere Blue Whales", "Population": 2000},
-          {"Name": "North Atlantic Fin Whales", "Population": 74000},
-          {"Name": "North Atlantic Sperm Whales", "Population": 27000},
-          {"Name": "North Pacific Sperm Whales", "Population": 10000},
-          {"Name": "Southern Hemisphere Sperm Whales", "Population": 8500},
-          {"Name": "Gray Whales", "Population": 20000},
-          {"Name": "Bryde's Whales", "Population": 41000},
-          {"Name": "North Atlantic Sei Whales", "Population": 6300},
-          {"Name": "North Pacific Sei Whales", "Population": 30000},
-          {"Name": "Southern Hemisphere Sei Whales", "Population": 700},
-          {"Name": "North Atlantic Humpback Whales", "Population": 37000},
-          {"Name": "North Pacific Humpback Whales", "Population": 22000},
-          {"Name": "Southern Hemisphere Humpback Whales", "Population": 96000},
-          {"Name": "Bowhead Whales", "Population": 14000}
+        "url": "https://raw.githubusercontent.com/kyledeocampo/FIT3179-Australian-Marine-Life/refs/heads/main/data/AML%20-%20Current%20Population%20of%20Whale%20Species%20in%20Australia.csv",
+        "format": {
+          "type": "csv",
+          "parse": {
+            "Species": "string",
+            "Length (m)": "number",
+            "Height (m)": "number",
+            "Weight (metric tons)": "number"
+          }
+        },
+        "transform": [
+          {
+            "type": "filter",
+            "expr": "isValid(datum['Length (m)']) && isValid(datum['Height (m)']) && datum['Length (m)'] > 0 && datum['Height (m)'] > 0"
+          },
+          {
+            "type": "formula",
+            "as": "Image",
+            "expr": "'https://cdn.jsdelivr.net/gh/twitter/twemoji@latest/assets/svg/1f40b.svg'"
+          }
         ]
       }
+    ],
+  
+    "signals": [
+      {"name": "baseline", "value": 590},
+      {"name": "maxImageHeight", "value": 420},
+      {"name": "maxImageWidth", "value": 180}
+    ],
+  
+    "scales": [
+      {
+        "name": "x",
+        "type": "band",
+        "domain": {
+          "data": "table",
+          "field": "Species"
+        },
+        "range": [20, 680],
+        "padding": 0.12
+      },
+      {
+        "name": "heightScale",
+        "type": "linear",
+        "domain": {
+          "data": "table",
+          "field": "Height (m)"
+        },
+        "range": [60, 420],
+        "zero": false,
+        "nice": false
+      },
+      {
+        "name": "lengthScale",
+        "type": "linear",
+        "domain": {
+          "data": "table",
+          "field": "Length (m)"
+        },
+        "range": [60, 180],
+        "zero": false,
+        "nice": false
+      }
+    ],
+  
+    "marks": [
+      {
+        "type": "rule",
+        "encode": {
+          "enter": {
+            "x": {"value": 15},
+            "x2": {"value": 685},
+            "y": {"signal": "baseline"},
+            "stroke": {"value": "#aab3bd"},
+            "strokeWidth": {"value": 1}
+          }
+        }
+      },
+      {
+        "type": "image",
+        "name": "whaleImages",
+        "from": {"data": "table"},
+        "encode": {
+          "enter": {
+            "url": {"field": "Image"},
+            "align": {"value": "center"},
+            "baseline": {"value": "bottom"},
+            "aspect": {"value": true}
+          },
+          "update": {
+            "x": {
+              "scale": "x",
+              "field": "Species",
+              "band": 0.5
+            },
+            "y": {"signal": "baseline"},
+            "height": {
+              "scale": "heightScale",
+              "field": "Height (m)"
+            },
+            "width": {
+              "signal": "scale('heightScale', datum['Height (m)']) * datum['Length (m)'] / datum['Height (m)']"
+            },
+            "tooltip": {
+              "signal": "{'Species': datum.Species, 'Length (m)': format(datum['Length (m)'], '.2f'), 'Height (m)': format(datum['Height (m)'], '.2f'), 'Weight (metric tons)': datum['Weight (metric tons)']}"
+            }
+          }
+        }
+      },
+      {
+        "type": "text",
+        "from": {"data": "table"},
+        "encode": {
+          "enter": {
+            "align": {"value": "center"},
+            "baseline": {"value": "top"},
+            "fontSize": {"value": 12},
+            "fill": {"value": "#253448"}
+          },
+          "update": {
+            "x": {
+              "scale": "x",
+              "field": "Species",
+              "band": 0.5
+            },
+            "y": {"signal": "baseline + 8"},
+            "text": {"field": "Species"}
+          }
+        }
+      }
     ]
-}
+  }
+  

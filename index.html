@@ -249,6 +249,14 @@
     const rows = view.data('raw');
     const urls = [...new Set(rows.map(r => r.url))];
     const ns = 'http://www.w3.org/2000/svg';
+    // Resolve a CSV path relative to the page, so it works on localhost and GitHub Pages
+    function resolveUrl(u) {
+      u = (u || '').trim();
+      if (/^https?:\/\//i.test(u)) return u;      // full URLs are left alone
+      u = u.replace(/^\.?\//, '');                // drop leading "/" or "./"
+      try { u = decodeURI(u); } catch (e) {}
+      return new URL(encodeURI(u), document.baseURI).href;
+    }
 
     // Rewrite a path string as absolute commands with a matrix [a,b,c,d,e,f] applied
     function normalizePath(d, m) {
@@ -396,9 +404,14 @@
     return b;
     }
 
-    const svgRows = await Promise.all(urls.map(async (url) => {
-    const text = await (await fetch(url)).text();
+    const results = await Promise.all(urls.map(async (url) => {
+    const full = resolveUrl(url);
+    try {
+    const res = await fetch(full, { cache: 'no-cache' });
+    if (!res.ok) throw new Error(res.status + ' ' + res.statusText);
+    const text = await res.text();
     const doc = new DOMParser().parseFromString(text, 'image/svg+xml');
+    if (doc.querySelector('parsererror')) throw new Error('Not a valid SVG file');
     const root = doc.documentElement;
 
     const parts = [];
@@ -414,7 +427,20 @@
     const d = parts.join(' ');
     const b = measure(d);
     return { url, d, vbX: b.x, vbY: b.y, vbW: b.width, vbH: b.height };
+    } catch (e) {
+    console.error('Could not load SVG:', full, e);
+    return null;
+    }
     }));
+
+    const svgRows = results.filter(Boolean);
+    const failed = urls.filter((u, i) => !results[i]);
+    if (failed.length) {
+    const msg = document.createElement('p');
+    msg.style.cssText = 'color:#b00020;font-size:13px';
+    msg.textContent = 'Could not load: ' + failed.map(resolveUrl).join(', ');
+    document.getElementById('vis3').appendChild(msg);
+    }
 
     view.insert('svgs', svgRows).run();
     }).catch(console.error);

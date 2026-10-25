@@ -1,0 +1,143 @@
+
+{
+    "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+    "description": "Waffle chart of Australian shark incidents by associated shark species.",
+    "data": {
+      "url": "data/AML%20-%20Australian%20Shark-Incident%20Database%20Public%20Version.csv",
+      "format": {
+        "type": "csv"
+      }
+    },
+    "width": 500,
+    "height": 650,
+    "padding": 15,
+    "transform": [
+      {
+        "calculate": "isValid(datum['Shark.common.name']) && datum['Shark.common.name'] != '' ? datum['Shark.common.name'] : 'Unknown species'",
+        "as": "Species"
+      },
+      {
+        "joinaggregate": [
+          {
+            "op": "count",
+            "field": "UIN",
+            "as": "TotalIncidents"
+          }
+        ]
+      },
+      {
+        "joinaggregate": [
+          {
+            "op": "count",
+            "field": "UIN",
+            "as": "SpeciesIncidents"
+          }
+        ],
+        "groupby": ["Species"]
+      },
+      {
+        "calculate": "datum.SpeciesIncidents / datum.TotalIncidents * 100",
+        "as": "PercentOfTotal"
+      },
+      {
+        "window": [
+          {
+            "op": "row_number",
+            "as": "IncidentNumber"
+          }
+        ],
+        "sort": [
+          {
+            "field": "Species",
+            "order": "ascending"
+          },
+          {
+            "field": "UIN",
+            "order": "ascending"
+          }
+        ]
+      },
+      {
+        "calculate": "(datum.IncidentNumber - 1) % 10",
+        "as": "Column"
+      },
+      {
+        "calculate": "floor((datum.IncidentNumber - 1) / 10)",
+        "as": "Row"
+      }
+    ],
+    "mark": {
+      "type": "rect",
+      "stroke": "white",
+      "strokeWidth": 0.6,
+      "tooltip": true
+    },
+    "encoding": {
+      "x": {
+        "field": "Column",
+        "type": "ordinal",
+        "axis": null,
+        "sort": "ascending",
+        "scale": {
+          "paddingInner": 0.08,
+          "paddingOuter": 0.02
+        }
+      },
+      "y": {
+        "field": "Row",
+        "type": "ordinal",
+        "axis": null,
+        "sort": "descending",
+        "scale": {
+          "paddingInner": 0.08,
+          "paddingOuter": 0.02
+        }
+      },
+      "color": {
+        "field": "Species",
+        "type": "nominal",
+        "scale": {
+          "scheme": "tableau20"
+        },
+        "legend": {
+          "title": "Shark species",
+          "orient": "right",
+          "labelLimit": 220,
+          "titleFontSize": 14,
+          "labelFontSize": 11,
+          "symbolType": "square"
+        }
+      },
+      "tooltip": [
+        {
+          "field": "UIN",
+          "type": "quantitative",
+          "title": "Incident ID",
+          "format": ".0f"
+        },
+        {
+          "field": "Species",
+          "type": "nominal",
+          "title": "Shark species"
+        },
+        {
+          "field": "SpeciesIncidents",
+          "type": "quantitative",
+          "title": "Incidents involving species",
+          "format": ",.0f"
+        },
+        {
+          "field": "PercentOfTotal",
+          "type": "quantitative",
+          "title": "Share of all incidents (%)",
+          "format": ".2f"
+        }
+      ]
+    },
+    "config": {
+      "view": {
+        "stroke": null
+      }
+    }
+  }
+  

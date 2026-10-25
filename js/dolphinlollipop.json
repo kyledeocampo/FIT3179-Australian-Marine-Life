@@ -1,0 +1,215 @@
+
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+  "description": "Total Australian dolphin sightings over time, with a toggle for species breakdown.",
+  "data": {
+    "url": "https://raw.githubusercontent.com/kyledeocampo/FIT3179-Australian-Marine-Life/refs/heads/main/data/AML%20-%20Australian%20Dolphin%20Sightings%20over%20time%20by%20Species.csv",
+    "format": {
+      "type": "csv"
+    }
+  },
+  "params": [
+    {
+      "name": "viewMode",
+      "value": "Total sightings",
+      "bind": {
+        "input": "select",
+        "options": [
+          "Total sightings",
+          "Sightings by species"
+        ],
+        "name": "View: "
+      }
+    }
+  ],
+  "transform": [
+    {
+      "filter": "isValid(datum.Year) && datum.Year != 'n.d.' && datum.Year != '' && isValid(datum.Species) && datum.Species != ''"
+    },
+    {
+      "calculate": "toNumber(datum.Year)",
+      "as": "YearNumeric"
+    },
+    {
+      "filter": "isValid(datum.YearNumeric)"
+    },
+    {
+      "filter": "viewMode === 'Total sightings' || (indexof(datum.Species, 'Dolphin') >= 0 && indexof(datum.Species, 'Mixed') < 0)"
+    },
+    {
+      "calculate": "viewMode === 'Total sightings' ? 'All species' : datum.Species",
+      "as": "SpeciesGroup"
+    },
+    {
+      "aggregate": [
+        {
+          "op": "count",
+          "as": "TotalSightings"
+        }
+      ],
+      "groupby": [
+        "YearNumeric",
+        "SpeciesGroup"
+      ]
+    },
+    {
+      "joinaggregate": [
+        {
+          "op": "distinct",
+          "field": "SpeciesGroup",
+          "as": "SpeciesCount"
+        }
+      ]
+    },
+    {
+      "window": [
+        {
+          "op": "row_number",
+          "as": "SpeciesIndex"
+        }
+      ],
+      "sort": [
+        {
+          "field": "SpeciesGroup",
+          "order": "ascending"
+        }
+      ],
+      "groupby": [
+        "YearNumeric"
+      ]
+    },
+    {
+      "calculate": "viewMode === 'Total sightings' ? datum.YearNumeric : datum.YearNumeric + (datum.SpeciesIndex - (datum.SpeciesCount + 1) / 2) * 0.04",
+      "as": "PlotYear"
+    }
+  ],
+  "width": "container",
+  "height": 500,
+  "layer": [
+    {
+      "mark": {
+        "type": "rule",
+        "strokeWidth": 2
+      },
+      "encoding": {
+        "x": {
+          "field": "PlotYear",
+          "type": "quantitative",
+          "title": "Year",
+          "scale": {
+            "zero": false
+          },
+          "axis": {
+            "format": "d",
+            "tickMinStep": 1,
+            "grid": false
+          }
+        },
+        "y": {
+          "field": "TotalSightings",
+          "type": "quantitative",
+          "title": "Total Dolphin Sightings",
+          "scale": {
+            "zero": true
+          }
+        },
+        "y2": {
+          "datum": 0
+        },
+        "color": {
+          "condition": {
+            "test": "viewMode === 'Total sightings'",
+            "value": "#69AFC7"
+          },
+          "field": "SpeciesGroup",
+          "type": "nominal",
+          "title": "Dolphin Species",
+          "scale": {
+            "scheme": "tableau20"
+          },
+          "legend": {
+            "orient": "right",
+            "titleLimit": 220,
+            "labelLimit": 250
+          }
+        }
+      }
+    },
+    {
+      "mark": {
+        "type": "point",
+        "filled": true,
+        "size": 90,
+        "stroke": "white",
+        "strokeWidth": 1
+      },
+      "encoding": {
+        "x": {
+          "field": "PlotYear",
+          "type": "quantitative",
+          "title": "Year",
+          "axis": {
+            "format": "d",
+            "tickMinStep": 1
+          }
+        },
+        "y": {
+          "field": "TotalSightings",
+          "type": "quantitative",
+          "title": "Total Dolphin Sightings"
+        },
+        "color": {
+          "condition": {
+            "test": "viewMode === 'Total sightings'",
+            "value": "#087E8B"
+          },
+          "field": "SpeciesGroup",
+          "type": "nominal",
+          "title": "Dolphin Species",
+          "scale": {
+            "scheme": "tableau20"
+          },
+          "legend": {
+            "orient": "right",
+            "titleLimit": 220,
+            "labelLimit": 250
+          }
+        },
+        "tooltip": [
+          {
+            "field": "YearNumeric",
+            "type": "quantitative",
+            "title": "Year",
+            "format": "d"
+          },
+          {
+            "field": "SpeciesGroup",
+            "type": "nominal",
+            "title": "Species"
+          },
+          {
+            "field": "TotalSightings",
+            "type": "quantitative",
+            "title": "Total Sightings",
+            "format": ","
+          }
+        ]
+      }
+    }
+  ],
+  "config": {
+    "view": {
+      "stroke": null
+    },
+    "axis": {
+      "labelFontSize": 11,
+      "titleFontSize": 13,
+      "gridColor": "#E5E5E5",
+      "gridOpacity": 0.7
+    },
+    "legend": {
+      "labelFontSize": 10,
+      "symbolSize": 90
+    }
+  }
+}

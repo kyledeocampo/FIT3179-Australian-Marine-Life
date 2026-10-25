@@ -1,143 +1,190 @@
 
 {
-    "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
-    "description": "Waffle chart of Australian shark incidents by associated shark species.",
-    "data": {
-      "url": "data/AML%20-%20Australian%20Shark-Incident%20Database%20Public%20Version.csv",
-      "format": {
-        "type": "csv"
-      }
-    },
-    "width": 500,
-    "height": 650,
-    "padding": 15,
-    "transform": [
+    "$schema": "https://vega.github.io/schema/vega/v5.json",
+    "description": "10x10 waffle chart of Australian shark incidents by species.",
+    "width": 360,
+    "height": 360,
+    "padding": 10,
+    "autosize": "pad",
+    "data": [
       {
-        "calculate": "isValid(datum['Shark.common.name']) && datum['Shark.common.name'] != '' ? datum['Shark.common.name'] : 'Unknown species'",
-        "as": "Species"
-      },
-      {
-        "joinaggregate": [
+        "name": "incidents",
+        "url": "data/AML%20-%20Australian%20Shark-Incident%20Database%20Public%20Version.csv",
+        "format": {"type": "csv"},
+        "transform": [
           {
-            "op": "count",
-            "field": "UIN",
-            "as": "TotalIncidents"
+            "type": "formula",
+            "expr": "isValid(datum['Shark.common.name']) && trim(datum['Shark.common.name']) != '' ? trim(datum['Shark.common.name']) : 'Unknown species'",
+            "as": "Species"
           }
         ]
       },
       {
-        "joinaggregate": [
+        "name": "speciesCounts",
+        "source": "incidents",
+        "transform": [
           {
-            "op": "count",
-            "field": "UIN",
-            "as": "SpeciesIncidents"
-          }
-        ],
-        "groupby": ["Species"]
-      },
-      {
-        "calculate": "datum.SpeciesIncidents / datum.TotalIncidents * 100",
-        "as": "PercentOfTotal"
-      },
-      {
-        "window": [
-          {
-            "op": "row_number",
-            "as": "IncidentNumber"
-          }
-        ],
-        "sort": [
-          {
-            "field": "Species",
-            "order": "ascending"
+            "type": "aggregate",
+            "groupby": ["Species"],
+            "ops": ["count"],
+            "fields": ["UIN"],
+            "as": ["IncidentCount"]
           },
           {
-            "field": "UIN",
-            "order": "ascending"
+            "type": "joinaggregate",
+            "ops": ["sum"],
+            "fields": ["IncidentCount"],
+            "as": ["TotalIncidents"]
+          },
+          {
+            "type": "formula",
+            "expr": "datum.IncidentCount / datum.TotalIncidents * 100",
+            "as": "SpeciesPercent"
+          },
+          {
+            "type": "formula",
+            "expr": "datum.SpeciesPercent > 10 ? datum.Species : 'Other'",
+            "as": "Category"
           }
         ]
       },
       {
-        "calculate": "(datum.IncidentNumber - 1) % 10",
-        "as": "Column"
-      },
-      {
-        "calculate": "floor((datum.IncidentNumber - 1) / 10)",
-        "as": "Row"
+        "name": "categories",
+        "source": "speciesCounts",
+        "transform": [
+          {
+            "type": "aggregate",
+            "groupby": ["Category"],
+            "ops": ["sum"],
+            "fields": ["IncidentCount"],
+            "as": ["IncidentCount"]
+          },
+          {
+            "type": "joinaggregate",
+            "ops": ["sum"],
+            "fields": ["IncidentCount"],
+            "as": ["TotalIncidents"]
+          },
+          {
+            "type": "formula",
+            "expr": "datum.IncidentCount / datum.TotalIncidents * 100",
+            "as": "Percent"
+          },
+          {
+            "type": "window",
+            "ops": ["sum"],
+            "fields": ["Percent"],
+            "as": ["CumulativePercent"],
+            "sort": {
+              "field": ["IncidentCount", "Category"],
+              "order": ["ascending", "ascending"]
+            }
+          },
+          {
+            "type": "formula",
+            "expr": "max(0, round(datum.CumulativePercent - datum.Percent))",
+            "as": "StartSquare"
+          },
+          {
+            "type": "formula",
+            "expr": "min(100, round(datum.CumulativePercent))",
+            "as": "EndSquare"
+          },
+          {
+            "type": "formula",
+            "expr": "sequence(datum.StartSquare, datum.EndSquare, 1)",
+            "as": "Squares"
+          },
+          {
+            "type": "flatten",
+            "fields": ["Squares"],
+            "as": ["Square"]
+          },
+          {
+            "type": "formula",
+            "expr": "datum.Square % 10",
+            "as": "Column"
+          },
+          {
+            "type": "formula",
+            "expr": "floor(datum.Square / 10)",
+            "as": "Row"
+          }
+        ]
       }
     ],
-    "mark": {
-      "type": "rect",
-      "stroke": "white",
-      "strokeWidth": 0.6,
-      "tooltip": true
-    },
-    "encoding": {
-      "x": {
-        "field": "Column",
+    "scales": [
+      {
+        "name": "x",
+        "type": "band",
+        "domain": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+        "range": [0, 360],
+        "paddingInner": 0.08,
+        "paddingOuter": 0.02
+      },
+      {
+        "name": "y",
+        "type": "band",
+        "domain": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+        "range": [0, 360],
+        "reverse": true,
+        "paddingInner": 0.08,
+        "paddingOuter": 0.02
+      },
+      {
+        "name": "colour",
         "type": "ordinal",
-        "axis": null,
-        "sort": "ascending",
-        "scale": {
-          "paddingInner": 0.08,
-          "paddingOuter": 0.02
-        }
-      },
-      "y": {
-        "field": "Row",
-        "type": "ordinal",
-        "axis": null,
-        "sort": "descending",
-        "scale": {
-          "paddingInner": 0.08,
-          "paddingOuter": 0.02
-        }
-      },
-      "color": {
-        "field": "Species",
-        "type": "nominal",
-        "scale": {
-          "scheme": "tableau20"
+        "domain": {
+          "data": "categories",
+          "field": "Category",
+          "sort": {
+            "op": "min",
+            "field": "IncidentCount",
+            "order": "ascending"
+          }
         },
-        "legend": {
-          "title": "Shark species",
-          "orient": "right",
-          "labelLimit": 220,
-          "titleFontSize": 14,
-          "labelFontSize": 11,
-          "symbolType": "square"
-        }
-      },
-      "tooltip": [
-        {
-          "field": "UIN",
-          "type": "quantitative",
-          "title": "Incident ID",
-          "format": ".0f"
-        },
-        {
-          "field": "Species",
-          "type": "nominal",
-          "title": "Shark species"
-        },
-        {
-          "field": "SpeciesIncidents",
-          "type": "quantitative",
-          "title": "Incidents involving species",
-          "format": ",.0f"
-        },
-        {
-          "field": "PercentOfTotal",
-          "type": "quantitative",
-          "title": "Share of all incidents (%)",
-          "format": ".2f"
-        }
-      ]
-    },
-    "config": {
-      "view": {
-        "stroke": null
+        "range": {"scheme": "tableau10"}
       }
+    ],
+    "legends": [
+      {
+        "fill": "colour",
+        "title": "Shark species",
+        "orient": "right",
+        "labelLimit": 220,
+        "encode": {
+          "symbols": {
+            "update": {
+              "shape": {"value": "square"}
+            }
+          }
+        }
+      }
+    ],
+    "marks": [
+      {
+        "type": "rect",
+        "from": {"data": "categories"},
+        "encode": {
+          "enter": {
+            "stroke": {"value": "white"},
+            "strokeWidth": {"value": 1},
+            "tooltip": {
+              "signal": "{'Category': datum.Category, 'Incidents': datum.IncidentCount, 'Share of incidents (%)': format(datum.Percent, '.1f')}"
+            }
+          },
+          "update": {
+            "x": {"scale": "x", "field": "Column"},
+            "y": {"scale": "y", "field": "Row"},
+            "width": {"scale": "x", "band": 1},
+            "height": {"scale": "y", "band": 1},
+            "fill": {"scale": "colour", "field": "Category"}
+          }
+        }
+      }
+    ],
+    "config": {
+      "view": {"stroke": null}
     }
   }
   

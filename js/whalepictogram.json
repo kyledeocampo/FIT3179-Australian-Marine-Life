@@ -1,136 +1,181 @@
-
 {
-    "$schema": "https://vega.github.io/schema/vega/v5.json",
-    "width": 1000,
-    "height": 650,
-    "padding": 30,
-    "autosize": "fit",
-  
-    "data": [
-      {
-        "name": "table",
-        "url": "https://raw.githubusercontent.com/kyledeocampo/FIT3179-Australian-Marine-Life/refs/heads/main/data/AML%20-%20Whale%20Sizes%20and%20Lengths%20Pictogram%20Comparison.csv",
-        "format": {
-          "type": "csv",
-          "parse": {
-            "Length (m)": "number",
-            "Height (m)": "number",
-            "Weight (metric tons)": "number"
-          }
+  "$schema": "https://vega.github.io/schema/vega/v5.json",
+  "width": 1000,
+  "padding": 30,
+  "autosize": "pad",
+
+  "data": [
+    {
+      "name": "raw",
+      "url": "https://raw.githubusercontent.com/kyledeocampo/FIT3179-Australian-Marine-Life/refs/heads/main/data/AML%20-%20Whale%20Sizes%20and%20Lengths%20Pictogram%20Comparison.csv",
+      "format": {
+        "type": "csv",
+        "parse": {
+          "Length (m)": "number",
+          "Height (m)": "number",
+          "Weight (metric tons)": "number"
+        }
+      },
+      "transform": [
+        {
+          "type": "filter",
+          "expr": "isValid(datum['Length (m)']) && isValid(datum['Height (m)']) && isValid(datum['Weight (metric tons)'])"
         },
-        "transform": [
-          {
-            "type": "filter",
-            "expr": "isValid(datum['Length (m)']) && isValid(datum['Height (m)']) && isValid(datum['Weight (metric tons)'])"
-          },
-          {
-            "type": "formula",
-            "as": "ImageWidth",
-            "expr": "datum['Length (m)']"
-          },
-          {
-            "type": "formula",
-            "as": "ImageHeight",
-            "expr": "datum['Height (m)']"
-          },
-          {
-            "type": "formula",
-            "as": "WeightSaturation",
-            "expr": "0.2 + 0.8 * datum['Weight (metric tons)'] / 200"
-          }
-        ]
-      }
-    ],
-  
-    "signals": [
-      {"name": "baseline", "value": 510}
-    ],
-  
-    "scales": [
-      {
-        "name": "x",
-        "type": "band",
-        "domain": {"data": "table", "field": "Species"},
-        "range": [10, 990],
-        "padding": 0.08
-      },
-      {
-        "name": "weightColor",
-        "type": "linear",
-        "domain": [0, 200],
-        "range": ["#e5e5e5", "#263746"],
-        "clamp": true
-      }
-    ],
-  
-    "marks": [
-      {
-        "type": "rule",
-        "encode": {
-          "enter": {
-            "x": {"value": 0},
-            "x2": {"signal": "width"},
-            "y": {"signal": "baseline"},
-            "stroke": {"value": "#d5d5d5"},
-            "strokeWidth": {"value": 1}
-          }
+        {"type": "formula", "as": "isWhale", "expr": "indexof(lower(datum.Species), 'whale') >= 0"},
+        {"type": "formula", "as": "isPerson", "expr": "indexof(lower(datum.Species), 'human') >= 0 || indexof(lower(datum.Species), 'person') >= 0"},
+        {
+          "type": "formula",
+          "as": "ratio",
+          "expr": "datum.isPerson ? 540/200 : (datum.isWhale ? 104/254 : 182/512)"
+        },
+        {
+          "type": "formula",
+          "as": "widthM",
+          "expr": "datum.isPerson ? datum['Height (m)'] / (540/200) : datum['Length (m)']"
+        },
+        {"type": "formula", "as": "heightM", "expr": "datum.widthM * datum.ratio"}
+      ]
+    },
+    {
+      "name": "totals",
+      "source": "raw",
+      "transform": [
+        {
+          "type": "aggregate",
+          "fields": ["widthM", "heightM", "Species"],
+          "ops": ["max", "sum", "count"],
+          "as": ["maxWidthM", "sumHeightM", "n"]
         }
-      },
-      {
-        "type": "image",
-        "name": "comparisonImages",
-        "from": {"data": "table"},
-        "encode": {
-          "enter": {
-            "url": {"field": "url"},
-            "align": {"value": "center"},
-            "baseline": {"value": "bottom"},
-            "aspect": {"value": true}
-          },
-          "update": {
-            "x": {
-              "scale": "x",
-              "field": "Species",
-              "band": 0.5
-            },
-            "y": {"signal": "baseline"},
-            "width": {
-            "signal": "datum['Length (m)'] * 20"
-            },
-            "height": {
-            "signal": "datum['Height (m)'] * 65"
-            },
-            "opacity": {
-              "signal": "0.35 + 0.65 * datum['Weight (metric tons)'] / 200"
-            },
-            "tooltip": {
-              "signal": "{'Species': datum.Species, 'Length (m)': datum['Length (m)'], 'Height (m)': datum['Height (m)'], 'Weight (metric tons)': datum['Weight (metric tons)']}"
-            }
-          }
+      ]
+    },
+    {
+      "name": "whalesOnly",
+      "source": "raw",
+      "transform": [
+        {"type": "filter", "expr": "datum.isWhale"},
+        {
+          "type": "aggregate",
+          "fields": ["Weight (metric tons)"],
+          "ops": ["max"],
+          "as": ["maxW"]
         }
-      },
-      {
-        "type": "text",
-        "from": {"data": "table"},
-        "encode": {
-          "enter": {
-            "align": {"value": "center"},
-            "baseline": {"value": "top"},
-            "fontSize": {"value": 13},
-            "fill": {"value": "#263746"}
+      ]
+    },
+    {
+      "name": "table",
+      "source": "raw",
+      "transform": [
+        {"type": "collect", "sort": {"field": "widthM", "order": "descending"}},
+        {
+          "type": "window",
+          "ops": ["row_number", "sum"],
+          "fields": [null, "heightM"],
+          "as": ["idx", "cumH"],
+          "frame": [null, 0]
+        }
+      ]
+    }
+  ],
+
+  "signals": [
+    {"name": "leftPad", "value": 20},
+    {"name": "labelH", "value": 20},
+    {"name": "gap", "value": 14},
+    {
+      "name": "k",
+      "update": "(width - leftPad) / data('totals')[0].maxWidthM"
+    },
+    {
+      "name": "stackH",
+      "update": "data('totals')[0].n * labelH + (data('totals')[0].n - 1) * gap + data('totals')[0].sumHeightM * k"
+    },
+    {"name": "height", "update": "stackH + 70"}
+  ],
+
+  "marks": [
+    {
+      "type": "rect",
+      "name": "whaleBoxes",
+      "from": {"data": "table"},
+      "encode": {
+        "update": {
+          "x": {"signal": "leftPad"},
+          "width": {"signal": "k * datum.widthM"},
+          "y": {"signal": "datum.idx * labelH + (datum.idx - 1) * gap + (datum.cumH - datum.heightM) * k"},
+          "height": {"signal": "k * datum.heightM"},
+          "fill": {
+            "signal": "datum.isWhale ? hcl((datum.idx * 137.5) % 360, 55, 35 + 45 * datum['Weight (metric tons)'] / data('whalesOnly')[0].maxW) : 'transparent'"
           },
-          "update": {
-            "x": {
-              "scale": "x",
-              "field": "Species",
-              "band": 0.5
-            },
-            "y": {"signal": "baseline + 12"},
-            "text": {"field": "Species"},
-            "limit": {"value": 150}
+          "tooltip": {
+            "signal": "{'Species': datum.Species, 'Length (m)': datum['Length (m)'], 'Height (m)': datum['Height (m)'], 'Weight (metric tons)': datum['Weight (metric tons)']}"
           }
         }
       }
-    ]
-  }
-  
+    },
+    {
+      "type": "image",
+      "name": "images",
+      "from": {"data": "table"},
+      "encode": {
+        "enter": {
+          "url": {"field": "url"},
+          "aspect": {"value": false},
+          "align": {"value": "left"},
+          "baseline": {"value": "top"}
+        },
+        "update": {
+          "x": {"signal": "leftPad"},
+          "width": {"signal": "k * datum.widthM"},
+          "height": {"signal": "k * datum.heightM"},
+          "y": {"signal": "datum.idx * labelH + (datum.idx - 1) * gap + (datum.cumH - datum.heightM) * k"},
+          "tooltip": {
+            "signal": "{'Species': datum.Species, 'Length (m)': datum['Length (m)'], 'Height (m)': datum['Height (m)'], 'Weight (metric tons)': datum['Weight (metric tons)']}"
+          }
+        }
+      }
+    },
+    {
+      "type": "text",
+      "from": {"data": "table"},
+      "encode": {
+        "enter": {
+          "align": {"value": "left"},
+          "baseline": {"value": "bottom"},
+          "fontSize": {"value": 13},
+          "fontWeight": {"value": "bold"},
+          "fill": {"value": "#263746"}
+        },
+        "update": {
+          "x": {"signal": "leftPad"},
+          "y": {"signal": "datum.idx * labelH + (datum.idx - 1) * gap + (datum.cumH - datum.heightM) * k - 4"},
+          "text": {"signal": "datum.Species + '  (' + datum['Length (m)'] + ' m, ' + datum['Weight (metric tons)'] + ' t)'"}
+        }
+      }
+    },
+    {
+      "type": "rule",
+      "encode": {
+        "update": {
+          "x": {"signal": "leftPad"},
+          "x2": {"signal": "leftPad + 5 * k"},
+          "y": {"signal": "stackH + 30"},
+          "stroke": {"value": "#263746"},
+          "strokeWidth": {"value": 2}
+        }
+      }
+    },
+    {
+      "type": "text",
+      "encode": {
+        "update": {
+          "x": {"signal": "leftPad"},
+          "y": {"signal": "stackH + 38"},
+          "baseline": {"value": "top"},
+          "text": {"value": "Scale bar: 5 m"},
+          "fontSize": {"value": 12},
+          "fill": {"value": "#263746"}
+        }
+      }
+    }
+  ]
+}

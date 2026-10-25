@@ -1,186 +1,288 @@
+
 {
-    "$schema": "https://vega.github.io/schema/vega/v6.json",
-    "description": "A radar chart example, showing multiple dimensions in a radial layout.",
-    "width": 400,
-    "height": 400,
-    "padding": 40,
-    "autosize": {"type": "none", "contains": "padding"},
-  
-    "signals": [
-      {"name": "radius", "update": "width / 2"}
-    ],
-  
-    "data": [
-      {
-        "name": "table",
-        "values": [
-          {"key": "key-0", "value": 19, "category": 0},
-          {"key": "key-1", "value": 22, "category": 0},
-          {"key": "key-2", "value": 14, "category": 0},
-          {"key": "key-3", "value": 38, "category": 0},
-          {"key": "key-4", "value": 23, "category": 0},
-          {"key": "key-5", "value": 5, "category": 0},
-          {"key": "key-6", "value": 27, "category": 0},
-          {"key": "key-0", "value": 13, "category": 1},
-          {"key": "key-1", "value": 12, "category": 1},
-          {"key": "key-2", "value": 42, "category": 1},
-          {"key": "key-3", "value": 13, "category": 1},
-          {"key": "key-4", "value": 6, "category": 1},
-          {"key": "key-5", "value": 15, "category": 1},
-          {"key": "key-6", "value": 8, "category": 1}
-        ]
-      },
-      {
-        "name": "keys",
-        "source": "table",
-        "transform": [
-          {
-            "type": "aggregate",
-            "groupby": ["key"]
-          }
-        ]
-      }
-    ],
-  
-    "scales": [
-      {
-        "name": "angular",
-        "type": "point",
-        "range": {"signal": "[-PI, PI]"},
-        "padding": 0.5,
-        "domain": {"data": "table", "field": "key"}
-      },
-      {
-        "name": "radial",
-        "type": "linear",
-        "range": {"signal": "[0, radius]"},
-        "zero": true,
-        "nice": false,
-        "domain": {"data": "table", "field": "value"},
-        "domainMin": 0
-      },
-      {
-        "name": "color",
-        "type": "ordinal",
-        "domain": {"data": "table", "field": "category"},
-        "range": {"scheme": "category10"}
-      }
-    ],
-  
-    "encode": {
-      "enter": {
-        "x": {"signal": "radius"},
-        "y": {"signal": "radius"}
+  "$schema": "https://vega.github.io/schema/vega/v6.json",
+  "description": "Radar chart comparing shark species and specifications.",
+  "width": 500,
+  "height": 500,
+  "padding": 90,
+  "autosize": {
+    "type": "none",
+    "contains": "padding"
+  },
+  "signals": [
+    {
+      "name": "radius",
+      "update": "min(width, height) / 2 - 45"
+    },
+    {
+      "name": "centerX",
+      "update": "width / 2"
+    },
+    {
+      "name": "centerY",
+      "update": "height / 2"
+    }
+  ],
+  "data": [
+    {
+      "name": "raw",
+      "url": "https://raw.githubusercontent.com/kyledeocampo/FIT3179-Australian-Marine-Life/refs/heads/main/data/AML%20-%20Radar%20Chart%20Shark%20Species%20and%20Specifications.csv",
+      "format": {
+        "type": "csv"
       }
     },
-  
-    "marks": [
-      {
-        "type": "group",
-        "name": "categories",
-        "zindex": 1,
-        "from": {
-          "facet": {"data": "table", "name": "facet", "groupby": ["category"]}
+    {
+      "name": "table",
+      "source": "raw",
+      "transform": [
+        {
+          "type": "fold",
+          "fields": [
+            "Length",
+            "Weight",
+            "Lifespan",
+            "Conservation Status"
+          ],
+          "as": [
+            "metric",
+            "value"
+          ]
         },
-        "marks": [
-          {
-            "type": "line",
-            "name": "category-line",
-            "from": {"data": "facet"},
-            "encode": {
-              "enter": {
-                "interpolate": {"value": "linear-closed"},
-                "x": {"signal": "scale('radial', datum.value) * cos(scale('angular', datum.key))"},
-                "y": {"signal": "scale('radial', datum.value) * sin(scale('angular', datum.key))"},
-                "stroke": {"scale": "color", "field": "category"},
-                "strokeWidth": {"value": 1},
-                "fill": {"scale": "color", "field": "category"},
-                "fillOpacity": {"value": 0.1}
-              }
+        {
+          "type": "formula",
+          "as": "metricOrder",
+          "expr": "datum.metric === 'Length' ? 0 : datum.metric === 'Weight' ? 1 : datum.metric === 'Lifespan' ? 2 : 3"
+        },
+        {
+          "type": "formula",
+          "as": "normalised",
+          "expr": "datum.metric === 'Length' ? (toNumber(datum.value) - 3) / 3 : datum.metric === 'Weight' ? (toNumber(datum.value) - 70) / 1830 : datum.metric === 'Lifespan' ? (toNumber(datum.value) - 22) / 48 : (toNumber(datum.value) - 1) / 6"
+        },
+        {
+          "type": "filter",
+          "expr": "isValid(toNumber(datum.value))"
+        },
+        {
+          "type": "collect",
+          "sort": {
+            "field": [
+              "Species",
+              "metricOrder"
+            ],
+            "order": [
+              "ascending",
+              "ascending"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "metrics",
+      "source": "table",
+      "transform": [
+        {
+          "type": "aggregate",
+          "groupby": [
+            "metric",
+            "metricOrder"
+          ]
+        },
+        {
+          "type": "collect",
+          "sort": {
+            "field": "metricOrder",
+            "order": "ascending"
+          }
+        }
+      ]
+    },
+    {
+      "name": "rings",
+      "values": [
+        {"level": 0.2},
+        {"level": 0.4},
+        {"level": 0.6},
+        {"level": 0.8},
+        {"level": 1.0}
+      ]
+    }
+  ],
+  "scales": [
+    {
+      "name": "angular",
+      "type": "point",
+      "domain": {
+        "data": "metrics",
+        "field": "metric"
+      },
+      "range": {
+        "signal": "[0, 2 * PI]"
+      },
+      "padding": 0.5
+    },
+    {
+      "name": "radial",
+      "type": "linear",
+      "domain": [0, 1],
+      "range": [0, {"signal": "radius"}],
+      "clamp": true,
+      "nice": false
+    },
+    {
+      "name": "color",
+      "type": "ordinal",
+      "domain": {
+        "data": "raw",
+        "field": "Species"
+      },
+      "range": {
+        "scheme": "category10"
+      }
+    }
+  ],
+  "marks": [
+    {
+      "type": "group",
+      "name": "radar",
+      "encode": {
+        "update": {
+          "x": {"signal": "centerX"},
+          "y": {"signal": "centerY"},
+          "width": {"value": 0},
+          "height": {"value": 0}
+        }
+      },
+      "marks": [
+        {
+          "type": "symbol",
+          "name": "grid-rings",
+          "from": {"data": "rings"},
+          "encode": {
+            "update": {
+              "x": {"value": 0},
+              "y": {"value": 0},
+              "shape": {"value": "circle"},
+              "size": {
+                "signal": "pow(scale('radial', datum.level) * 2, 2) * PI"
+              },
+              "fill": {"value": "white"},
+              "fillOpacity": {"value": 0},
+              "stroke": {"value": "#cbd5e1"},
+              "strokeWidth": {"value": 1}
+            }
+          }
+        },
+        {
+          "type": "rule",
+          "name": "radial-axes",
+          "from": {"data": "metrics"},
+          "encode": {
+            "update": {
+              "x": {"value": 0},
+              "y": {"value": 0},
+              "x2": {
+                "signal": "scale('radial', 1) * cos(scale('angular', datum.metric) - PI / 2)"
+              },
+              "y2": {
+                "signal": "scale('radial', 1) * sin(scale('angular', datum.metric) - PI / 2)"
+              },
+              "stroke": {"value": "#94a3b8"},
+              "strokeWidth": {"value": 1}
+            }
+          }
+        },
+        {
+          "type": "group",
+          "name": "species-groups",
+          "from": {
+            "facet": {
+              "data": "table",
+              "name": "speciesData",
+              "groupby": ["Species"]
             }
           },
-          {
-            "type": "text",
-            "name": "value-text",
-            "from": {"data": "category-line"},
-            "encode": {
-              "enter": {
-                "x": {"signal": "datum.x"},
-                "y": {"signal": "datum.y"},
-                "text": {"signal": "datum.datum.value"},
-                "align": {"value": "center"},
-                "baseline": {"value": "middle"},
-                "fill": {"value": "black"}
+          "marks": [
+            {
+              "type": "line",
+              "name": "species-polygon",
+              "from": {"data": "speciesData"},
+              "sort": {
+                "field": "metricOrder",
+                "order": "ascending"
+              },
+              "encode": {
+                "update": {
+                  "x": {
+                    "signal": "scale('radial', datum.normalised) * cos(scale('angular', datum.metric) - PI / 2)"
+                  },
+                  "y": {
+                    "signal": "scale('radial', datum.normalised) * sin(scale('angular', datum.metric) - PI / 2)"
+                  },
+                  "stroke": {
+                    "scale": "color",
+                    "field": "Species"
+                  },
+                  "strokeWidth": {"value": 2.5},
+                  "fill": {
+                    "scale": "color",
+                    "field": "Species"
+                  },
+                  "fillOpacity": {"value": 0.15},
+                  "interpolate": {"value": "linear-closed"}
+                }
+              }
+            },
+            {
+              "type": "symbol",
+              "name": "species-points",
+              "from": {"data": "speciesData"},
+              "encode": {
+                "update": {
+                  "x": {
+                    "signal": "scale('radial', datum.normalised) * cos(scale('angular', datum.metric) - PI / 2)"
+                  },
+                  "y": {
+                    "signal": "scale('radial', datum.normalised) * sin(scale('angular', datum.metric) - PI / 2)"
+                  },
+                  "size": {"value": 55},
+                  "fill": {
+                    "scale": "color",
+                    "field": "Species"
+                  },
+                  "stroke": {"value": "white"},
+                  "strokeWidth": {"value": 1}
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "name": "metric-labels",
+          "from": {"data": "metrics"},
+          "encode": {
+            "update": {
+              "x": {
+                "signal": "(radius + 18) * cos(scale('angular', datum.metric) - PI / 2)"
+              },
+              "y": {
+                "signal": "(radius + 18) * sin(scale('angular', datum.metric) - PI / 2)"
+              },
+              "text": {"field": "metric"},
+              "fontSize": {"value": 12},
+              "fontWeight": {"value": "bold"},
+              "fill": {"value": "#1f2937"},
+              "align": {
+                "signal": "cos(scale('angular', datum.metric) - PI / 2) > 0.2 ? 'left' : cos(scale('angular', datum.metric) - PI / 2) < -0.2 ? 'right' : 'center'"
+              },
+              "baseline": {
+                "signal": "sin(scale('angular', datum.metric) - PI / 2) > 0.2 ? 'top' : sin(scale('angular', datum.metric) - PI / 2) < -0.2 ? 'bottom' : 'middle'"
               }
             }
           }
-        ]
-      },
-      {
-        "type": "rule",
-        "name": "radial-grid",
-        "from": {"data": "keys"},
-        "zindex": 0,
-        "encode": {
-          "enter": {
-            "x": {"value": 0},
-            "y": {"value": 0},
-            "x2": {"signal": "radius * cos(scale('angular', datum.key))"},
-            "y2": {"signal": "radius * sin(scale('angular', datum.key))"},
-            "stroke": {"value": "lightgray"},
-            "strokeWidth": {"value": 1}
-          }
         }
-      },
-      {
-        "type": "text",
-        "name": "key-label",
-        "from": {"data": "keys"},
-        "zindex": 1,
-        "encode": {
-          "enter": {
-            "x": {"signal": "(radius + 5) * cos(scale('angular', datum.key))"},
-            "y": {"signal": "(radius + 5) * sin(scale('angular', datum.key))"},
-            "text": {"field": "key"},
-            "align": [
-              {
-                "test": "abs(scale('angular', datum.key)) > PI / 2",
-                "value": "right"
-              },
-              {
-                "value": "left"
-              }
-            ],
-            "baseline": [
-              {
-                "test": "scale('angular', datum.key) > 0", "value": "top"
-              },
-              {
-                "test": "scale('angular', datum.key) == 0", "value": "middle"
-              },
-              {
-                "value": "bottom"
-              }
-            ],
-            "fill": {"value": "black"},
-            "fontWeight": {"value": "bold"}
-          }
-        }
-      },
-      {
-        "type": "line",
-        "name": "outer-line",
-        "from": {"data": "radial-grid"},
-        "encode": {
-          "enter": {
-            "interpolate": {"value": "linear-closed"},
-            "x": {"field": "x2"},
-            "y": {"field": "y2"},
-            "stroke": {"value": "lightgray"},
-            "strokeWidth": {"value": 1}
-          }
-        }
-      }
-    ]
-  }
-  
+      ]
+    }
+  ]
+}

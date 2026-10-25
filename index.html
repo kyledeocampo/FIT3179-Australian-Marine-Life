@@ -64,8 +64,8 @@
             sed. Egestas purus viverra accumsan in nisl. Egestas purus viverra accumsan in nisl.</p>
         </div>
       </div>
-      <div class="pure-u-1-2">
-        <div id="vis1" class="vis-container"></div>
+      <div class="pure-u-1-1">
+        <div id="vis2" class="vis-container"></div>
       </div>
     </div>
 
@@ -79,8 +79,8 @@
             sed. Egestas purus viverra accumsan in nisl. Egestas purus viverra accumsan in nisl.</p>
         </div>
       </div>
-      <div class="pure-u-1-2">
-        <div id="vis2" class="vis-container"></div>
+      <div class="pure-u-1-1">
+        <div id="vis3" class="vis-container"></div>
       </div>
     </div>
 
@@ -103,6 +103,9 @@
             dolore magna aliqua. Massa sapien faucibus et molestie ac feugiat sed. </p>
         </div>
       </div>
+      <div class="pure-u-1-1">
+        <div id="vis4" class="vis-container"></div>
+      </div>
     </div>
     <!-- end pure grid group -->
 
@@ -118,7 +121,7 @@
         </div>
       </div>
       <div class="pure-u-1-1">
-        <div id="vis6" class="vis-container"></div>
+        <div id="vis5" class="vis-container"></div>
       </div>
     </div>
     <!-- end pure grid group -->
@@ -157,7 +160,7 @@
         </div>
       </div>
       <div class="pure-u-1-1">
-        <div id="vis8" class="vis-container"></div>
+        <div id="vis7" class="vis-container"></div>
       </div>
     </div>
     <!-- end pure grid group -->
@@ -195,6 +198,9 @@
             dolore magna aliqua. Massa sapien faucibus et molestie ac feugiat sed. </p>
         </div>
       </div>
+      <div class="pure-u-1-1">
+        <div id="vis9" class="vis-container"></div>
+      </div>
     </div>
     <!-- end pure grid group -->
 
@@ -209,33 +215,22 @@
             dolore magna aliqua. Massa sapien faucibus et molestie ac feugiat sed. </p>
         </div>
       </div>
+      <div class="pure-u-1-1">
+        <div id="vis10" class="vis-container"></div>
+      </div>
     </div>
     <!-- end pure grid group -->
-
-<!-- pure grid group -->
-<div class="pure-g">
-  <div class="pure-u-1-2">
-    <div class="description description-left">
-      <h2>Two Columns Layout</h2>
-      <p>The first column contains text and the second column contains a visualisation.
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et
-        dolore magna aliqua. Massa sapien faucibus et molestie ac feugiat sed. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et
-        dolore magna aliqua. Massa sapien faucibus et molestie ac feugiat sed. </p>
-    </div>
-  </div>
-  <div class="pure-u-1-2">
-    <div id="vis1" class="vis-container"></div>
-  </div>
-</div>
-<!-- end pure grid group -->
 
   </div> <!-- end page -->
   
   <script type="text/javascript">
     var specVis2 = "./js/whaleradialbar.json";
     var specVis3 = "./js/whalepictogram.json";
+    var specVis4 = "./js/dolphinbehaviourbin.json";
     var specVis5 = "./js/dolphinlollipop.json"
     var specVis7 = "./js/seaturtlesankey.json";
+    var specVis9 = "./js/sharkwaffle.json";
+    var specVis10 = "./js/sharkradar.json"
 
     vegaEmbed('#vis2', specVis2, { "actions": false }).then(function (result) {
       // Access the Vega view instance (https://vega.github.io/vega/docs/api/view/) as result.view
@@ -245,11 +240,23 @@
       // Access the Vega view instance (https://vega.github.io/vega/docs/api/view/) as result.view
     }).catch(console.error);
 
+    vegaEmbed('#vis4', specVis4, { "actions": false }).then(function (result) {
+      // Access the Vega view instance (https://vega.github.io/vega/docs/api/view/) as result.view
+    }).catch(console.error);
+
     vegaEmbed('#vis5', specVis5, { "actions": false }).then(function (result) {
       // Access the Vega view instance (https://vega.github.io/vega/docs/api/view/) as result.view
     }).catch(console.error);
 
     vegaEmbed('#vis7', specVis7, { "actions": false }).then(function (result) {
+      // Access the Vega view instance (https://vega.github.io/vega/docs/api/view/) as result.view
+    }).catch(console.error);
+
+    vegaEmbed('#vis9', specVis9, { "actions": false }).then(function (result) {
+      // Access the Vega view instance (https://vega.github.io/vega/docs/api/view/) as result.view
+    }).catch(console.error);
+
+    vegaEmbed('#vis10', specVis10, { "actions": false }).then(function (result) {
       // Access the Vega view instance (https://vega.github.io/vega/docs/api/view/) as result.view
     }).catch(console.error);
 

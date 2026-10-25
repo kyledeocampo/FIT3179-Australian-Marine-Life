@@ -1,0 +1,138 @@
+{
+    "$schema": "https://vega.github.io/schema/vega/v6.json",
+    "description": "Australian shark incidents as a dot map, coloured by shark species.",
+    "width": 900,
+    "height": 650,
+    "padding": 0,
+    "autosize": "none",
+    "background": "#000000",
+  
+    "signals": [
+      {"name": "dotSize", "value": 45}
+    ],
+  
+    "projections": [
+      {
+        "name": "projection",
+        "type": "mercator",
+        "center": [134, -27],
+        "scale": 950,
+        "translate": [450, 325],
+        "clipExtent": [[0, 0], [900, 650]]
+      }
+    ],
+  
+    "data": [
+      {
+        "name": "countries",
+        "url": "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_110m_admin_0_countries.geojson",
+        "format": {"type": "json", "property": "features"},
+        "transform": [
+          {"type": "filter", "expr": "datum.properties.ADMIN === 'Australia'"},
+          {"type": "geoshape", "projection": "projection", "as": "shape"}
+        ]
+      },
+  
+      {
+        "name": "incidents",
+        "url": "data/AML%20-%20Australian%20Shark-Incident%20Database%20Public%20Version.csv",
+        "format": {
+          "type": "csv",
+          "parse": {"Latitude": "number", "Longitude": "number", "Incident.year": "number"}
+        },
+        "transform": [
+          {
+            "type": "filter",
+            "expr": "isValid(datum.Latitude) && isValid(datum.Longitude) && datum.Latitude >= -45 && datum.Latitude <= -8 && datum.Longitude >= 110 && datum.Longitude <= 155"
+          },
+          {
+            "type": "formula",
+            "as": "sp",
+            "expr": "isValid(datum['Shark.common.name']) ? lower(trim(datum['Shark.common.name'])) : ''"
+          },
+          {
+            "type": "formula",
+            "as": "species",
+            "expr": "datum.sp === 'white shark' ? 'White shark' : datum.sp === 'tiger shark' ? 'Tiger shark' : datum.sp === 'bull shark' ? 'Bull shark' : datum.sp === 'wobbegong' ? 'Wobbegong' : (datum.sp === 'whaler shark' || datum.sp === 'bronze whaler shark') ? 'Whaler shark' : (datum.sp === '' || datum.sp === 'unknown') ? 'Unknown' : 'Other species'"
+          },
+          {
+            "type": "formula",
+            "as": "drawOrder",
+            "expr": "datum.species === 'Unknown' ? 0 : datum.species === 'Other species' ? 1 : 2"
+          },
+          {"type": "collect", "sort": {"field": "drawOrder"}},
+          {
+            "type": "geopoint",
+            "projection": "projection",
+            "fields": ["Longitude", "Latitude"],
+            "as": ["px", "py"]
+          },
+          {"type": "filter", "expr": "isValid(datum.px) && isValid(datum.py)"}
+        ]
+      }
+    ],
+  
+    "scales": [
+      {
+        "name": "speciesColor",
+        "type": "ordinal",
+        "domain": ["White shark", "Tiger shark", "Bull shark", "Wobbegong", "Whaler shark", "Other species", "Unknown"],
+        "range": ["#2ec4ff", "#ff9f1c", "#ff3d9a", "#7bd957", "#a77bff", "#ffe14d", "#8a9099"]
+      }
+    ],
+  
+    "legends": [
+      {
+        "fill": "speciesColor",
+        "title": "Shark species",
+        "orient": "bottom-left",
+        "offset": 20,
+        "symbolType": "circle",
+        "symbolSize": 140,
+        "titleColor": "#ffffff",
+        "labelColor": "#ffffff"
+      }
+    ],
+  
+    "marks": [
+      {
+        "type": "shape",
+        "name": "australia",
+        "from": {"data": "countries"},
+        "encode": {
+          "update": {
+            "shape": {"field": "shape"},
+            "fill": {"value": "#1a1a1a"},
+            "stroke": {"value": "#555555"},
+            "strokeWidth": {"value": 0.8}
+          }
+        }
+      },
+  
+      {
+        "type": "symbol",
+        "name": "incidentDots",
+        "from": {"data": "incidents"},
+        "encode": {
+          "update": {
+            "x": {"field": "px"},
+            "y": {"field": "py"},
+            "shape": {"value": "circle"},
+            "size": {"signal": "dotSize"},
+            "fill": {"scale": "speciesColor", "field": "species"},
+            "fillOpacity": {"value": 0.75},
+            "stroke": {"value": "#000000"},
+            "strokeWidth": {"value": 0.4},
+            "tooltip": {
+              "signal": "{'Species': datum.species, 'Recorded as': datum['Shark.common.name'], 'Year': datum['Incident.year'], 'State': datum.State, 'Location': datum.Location, 'Injury': datum['Victim.injury']}"
+            }
+          },
+          "hover": {
+            "stroke": {"value": "#ffffff"},
+            "strokeWidth": {"value": 1.5},
+            "fillOpacity": {"value": 1}
+          }
+        }
+      }
+    ]
+  }

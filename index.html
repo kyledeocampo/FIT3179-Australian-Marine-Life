@@ -145,6 +145,9 @@
             dolore magna aliqua. Massa sapien faucibus et molestie ac feugiat sed. </p>
         </div>
       </div>
+      <div class="pure-u-1-1">
+        <div id="vis6" class="vis-container"></div>
+      </div>
     </div>
     <!-- end pure grid group -->
 
@@ -183,6 +186,9 @@
             dolore magna aliqua. Massa sapien faucibus et molestie ac feugiat sed. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et
             dolore magna aliqua. Massa sapien faucibus et molestie ac feugiat sed. </p>
         </div>
+      </div>
+      <div class="pure-u-1-1">
+        <div id="vis8" class="vis-container"></div>
       </div>
     </div>
     <!-- end pure grid group -->
@@ -227,17 +233,190 @@
     var specVis2 = "./js/whaleradialbar.json";
     var specVis3 = "./js/whalepictogram.json";
     var specVis4 = "./js/dolphinbehaviourbin.json";
-    var specVis5 = "./js/dolphinlollipop.json"
+    var specVis5 = "./js/dolphinlollipop.json";
+    var specVis6 = "./js/seaturtleheatmap.json";
     var specVis7 = "./js/seaturtlesankey.json";
+    var specVis8 = "./js/sharkdotmap.json";
     var specVis9 = "./js/sharkwaffle.json";
-    var specVis10 = "./js/sharkradar.json"
+    var specVis10 = "./js/sharkradar.json";
 
     vegaEmbed('#vis2', specVis2, { "actions": false }).then(function (result) {
       // Access the Vega view instance (https://vega.github.io/vega/docs/api/view/) as result.view
     }).catch(console.error);
 
-    vegaEmbed('#vis3', specVis3, { "actions": false }).then(function (result) {
-      // Access the Vega view instance (https://vega.github.io/vega/docs/api/view/) as result.view
+    vegaEmbed('#vis3', specVis3, { "actions": false }).then(async function (result) {
+    const view = result.view;
+    const rows = view.data('raw');
+    const urls = [...new Set(rows.map(r => r.url))];
+    const ns = 'http://www.w3.org/2000/svg';
+
+    // Rewrite a path string as absolute commands with a matrix [a,b,c,d,e,f] applied
+    function normalizePath(d, m) {
+    const numRe = /[-+]?(?:\d*\.\d+|\d+\.?)(?:[eE][-+]?\d+)?/y;
+    let i = 0;
+    const skip = () => { while (i < d.length && /[\s,]/.test(d[i])) i++; };
+    const num = () => {
+      skip(); numRe.lastIndex = i;
+      const r = numRe.exec(d);
+      if (!r) return null;
+      i = numRe.lastIndex;
+      return parseFloat(r[0]);
+    };
+    const flag = () => { skip(); return +d[i++]; };
+    const T = (x, y) => [m[0] * x + m[2] * y + m[4], m[1] * x + m[3] * y + m[5]];
+    const f = (x, y) => T(x, y).map(v => +v.toFixed(3)).join(' ');
+    const sx = Math.hypot(m[0], m[1]);
+    const sy = Math.hypot(m[2], m[3]);
+    const rot = Math.atan2(m[1], m[0]) * 180 / Math.PI;
+    const flip = (m[0] * m[3] - m[1] * m[2]) < 0;
+
+    let cx = 0, cy = 0, startX = 0, startY = 0, cmd = '';
+    let prevC = null, prevQ = null;
+    const out = [];
+
+    while (true) {
+      skip();
+      if (i >= d.length) break;
+      if (/[a-zA-Z]/.test(d[i])) cmd = d[i++];
+      const rel = cmd === cmd.toLowerCase();
+      const C = cmd.toUpperCase();
+      const ox = rel ? cx : 0, oy = rel ? cy : 0;
+
+      if (C === 'Z') {
+        out.push('Z'); cx = startX; cy = startY; prevC = prevQ = null; continue;
+      }
+      let nextC = null, nextQ = null;
+
+      if (C === 'M' || C === 'L' || C === 'T') {
+        const x = num(), y = num();
+        if (x === null || y === null) break;
+        const X = x + ox, Y = y + oy;
+        if (C === 'M') {
+          out.push('M' + f(X, Y)); startX = X; startY = Y;
+          cmd = rel ? 'l' : 'L';
+        } else if (C === 'L') {
+          out.push('L' + f(X, Y));
+        } else {
+          const qx = prevQ ? 2 * cx - prevQ[0] : cx;
+          const qy = prevQ ? 2 * cy - prevQ[1] : cy;
+          out.push('Q' + f(qx, qy) + ' ' + f(X, Y)); nextQ = [qx, qy];
+        }
+        cx = X; cy = Y;
+      } else if (C === 'H') {
+        const x = num(); if (x === null) break;
+        cx = x + ox; out.push('L' + f(cx, cy));
+      } else if (C === 'V') {
+        const y = num(); if (y === null) break;
+        cy = y + oy; out.push('L' + f(cx, cy));
+      } else if (C === 'C') {
+        const v = [num(), num(), num(), num(), num(), num()];
+        if (v.includes(null)) break;
+        out.push('C' + f(v[0] + ox, v[1] + oy) + ' ' + f(v[2] + ox, v[3] + oy) + ' ' + f(v[4] + ox, v[5] + oy));
+        nextC = [v[2] + ox, v[3] + oy]; cx = v[4] + ox; cy = v[5] + oy;
+      } else if (C === 'S') {
+        const v = [num(), num(), num(), num()];
+        if (v.includes(null)) break;
+        const c1x = prevC ? 2 * cx - prevC[0] : cx;
+        const c1y = prevC ? 2 * cy - prevC[1] : cy;
+        out.push('C' + f(c1x, c1y) + ' ' + f(v[0] + ox, v[1] + oy) + ' ' + f(v[2] + ox, v[3] + oy));
+        nextC = [v[0] + ox, v[1] + oy]; cx = v[2] + ox; cy = v[3] + oy;
+      } else if (C === 'Q') {
+        const v = [num(), num(), num(), num()];
+        if (v.includes(null)) break;
+        out.push('Q' + f(v[0] + ox, v[1] + oy) + ' ' + f(v[2] + ox, v[3] + oy));
+        nextQ = [v[0] + ox, v[1] + oy]; cx = v[2] + ox; cy = v[3] + oy;
+      } else if (C === 'A') {
+        const rx = num(), ry = num(), xr = num();
+        const la = flag(), sw = flag();
+        const x = num(), y = num();
+        if (x === null || y === null) break;
+        const X = x + ox, Y = y + oy;
+        out.push(`A${+(rx * sx).toFixed(3)} ${+(ry * sy).toFixed(3)} ${+(xr + rot).toFixed(3)} ${la} ${flip ? 1 - sw : sw} ${f(X, Y)}`);
+        cx = X; cy = Y;
+      } else {
+        break;
+      }
+      prevC = nextC; prevQ = nextQ;
+    }
+    return out.join(' ');
+    }
+
+    // Turn any drawable shape into path data
+    function shapeToD(el) {
+    const n = name => parseFloat(el.getAttribute(name)) || 0;
+    switch (el.tagName.toLowerCase()) {
+      case 'path': return el.getAttribute('d');
+      case 'circle': {
+        const cx = n('cx'), cy = n('cy'), r = n('r');
+        return `M${cx - r} ${cy}A${r} ${r} 0 1 0 ${cx + r} ${cy}A${r} ${r} 0 1 0 ${cx - r} ${cy}Z`;
+      }
+      case 'ellipse': {
+        const cx = n('cx'), cy = n('cy'), rx = n('rx'), ry = n('ry');
+        return `M${cx - rx} ${cy}A${rx} ${ry} 0 1 0 ${cx + rx} ${cy}A${rx} ${ry} 0 1 0 ${cx - rx} ${cy}Z`;
+      }
+      case 'rect': {
+        const x = n('x'), y = n('y'), w = n('width'), h = n('height');
+        return `M${x} ${y}h${w}v${h}h${-w}Z`;
+      }
+      case 'polygon':
+      case 'polyline': {
+        const p = (el.getAttribute('points') || '').trim().split(/[\s,]+/).map(Number);
+        let s = '';
+        for (let j = 0; j + 1 < p.length; j += 2) s += (j ? 'L' : 'M') + p[j] + ' ' + p[j + 1];
+        return el.tagName.toLowerCase() === 'polygon' ? s + 'Z' : s;
+      }
+      default: return null;
+    }
+    } 
+
+    // Combined transform of an element and all its ancestors
+    function matrixFor(el, root) {
+    let m = new DOMMatrix();
+    for (let node = el; node && node !== root; node = node.parentNode) {
+      try {
+        if (node.transform && node.transform.baseVal.numberOfItems) {
+          const t = node.transform.baseVal.consolidate().matrix;
+          m = new DOMMatrix([t.a, t.b, t.c, t.d, t.e, t.f]).multiply(m);
+        }
+      } catch (e) { /* no transform */ }
+    }
+    return [m.a, m.b, m.c, m.d, m.e, m.f];
+    }
+
+    // Measure the real outline (ignores empty space in the viewBox)
+    function measure(d) {
+    const svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('style', 'position:absolute;visibility:hidden;width:0;height:0');
+    const p = document.createElementNS(ns, 'path');
+    p.setAttribute('d', d);
+    svg.appendChild(p);
+    document.body.appendChild(svg);
+    const b = p.getBBox();
+    document.body.removeChild(svg);
+    return b;
+    }
+
+    const svgRows = await Promise.all(urls.map(async (url) => {
+    const text = await (await fetch(url)).text();
+    const doc = new DOMParser().parseFromString(text, 'image/svg+xml');
+    const root = doc.documentElement;
+
+    const parts = [];
+    root.querySelectorAll('path, circle, ellipse, rect, polygon, polyline').forEach(el => {
+      if (el.closest('defs, clipPath, mask, symbol')) return;
+      const fill = (el.getAttribute('fill') || '').toLowerCase();
+      if (fill === 'none') return;
+      const d = shapeToD(el);
+      if (!d) return;
+      parts.push(normalizePath(d, matrixFor(el, root)));
+    });
+
+    const d = parts.join(' ');
+    const b = measure(d);
+    return { url, d, vbX: b.x, vbY: b.y, vbW: b.width, vbH: b.height };
+    }));
+
+    view.insert('svgs', svgRows).run();
     }).catch(console.error);
 
     vegaEmbed('#vis4', specVis4, { "actions": false }).then(function (result) {
@@ -248,7 +427,15 @@
       // Access the Vega view instance (https://vega.github.io/vega/docs/api/view/) as result.view
     }).catch(console.error);
 
+    vegaEmbed('#vis6', specVis6, { "actions": false }).then(function (result) {
+      // Access the Vega view instance (https://vega.github.io/vega/docs/api/view/) as result.view
+    }).catch(console.error);
+
     vegaEmbed('#vis7', specVis7, { "actions": false }).then(function (result) {
+      // Access the Vega view instance (https://vega.github.io/vega/docs/api/view/) as result.view
+    }).catch(console.error);
+
+    vegaEmbed('#vis8', specVis8, { "actions": false }).then(function (result) {
       // Access the Vega view instance (https://vega.github.io/vega/docs/api/view/) as result.view
     }).catch(console.error);
 

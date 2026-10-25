@@ -1,10 +1,13 @@
 {
   "$schema": "https://vega.github.io/schema/vega/v5.json",
-  "width": 1000,
   "padding": 30,
   "autosize": "pad",
 
   "data": [
+    {
+      "name": "svgs",
+      "values": []
+    },
     {
       "name": "raw",
       "url": "https://raw.githubusercontent.com/kyledeocampo/FIT3179-Australian-Marine-Life/refs/heads/main/data/AML%20-%20Whale%20Sizes%20and%20Lengths%20Pictogram%20Comparison.csv",
@@ -22,23 +25,44 @@
           "expr": "isValid(datum['Length (m)']) && isValid(datum['Height (m)']) && isValid(datum['Weight (metric tons)'])"
         },
         {"type": "formula", "as": "isWhale", "expr": "indexof(lower(datum.Species), 'whale') >= 0"},
-        {"type": "formula", "as": "isPerson", "expr": "indexof(lower(datum.Species), 'human') >= 0 || indexof(lower(datum.Species), 'person') >= 0"},
+        {"type": "formula", "as": "isPerson", "expr": "indexof(lower(datum.Species), 'human') >= 0 || indexof(lower(datum.Species), 'person') >= 0"}
+      ]
+    },
+    {
+      "name": "sized",
+      "source": "raw",
+      "transform": [
         {
-          "type": "formula",
-          "as": "ratio",
-          "expr": "datum.isPerson ? 540/200 : (datum.isWhale ? 104/254 : 182/512)"
+          "type": "lookup",
+          "from": "svgs",
+          "key": "url",
+          "fields": ["url"],
+          "values": ["d", "vbX", "vbY", "vbW", "vbH"],
+          "as": ["d", "vbX", "vbY", "vbW", "vbH"],
+          "default": null
         },
+        {"type": "formula", "as": "aspect", "expr": "datum.vbW ? datum.vbH / datum.vbW : 0.5"},
+        {"type": "formula", "as": "heightM", "expr": "datum.isPerson ? datum['Height (m)'] : datum['Length (m)'] * datum.aspect"},
+        {"type": "formula", "as": "widthM", "expr": "datum.isPerson ? datum.heightM / datum.aspect : datum['Length (m)']"}
+      ]
+    },
+    {
+      "name": "table",
+      "source": "sized",
+      "transform": [
+        {"type": "collect", "sort": {"field": "widthM", "order": "descending"}},
         {
-          "type": "formula",
-          "as": "widthM",
-          "expr": "datum.isPerson ? datum['Height (m)'] / (540/200) : datum['Length (m)']"
-        },
-        {"type": "formula", "as": "heightM", "expr": "datum.widthM * datum.ratio"}
+          "type": "window",
+          "ops": ["row_number", "sum"],
+          "fields": [null, "heightM"],
+          "as": ["idx", "cumH"],
+          "frame": [null, 0]
+        }
       ]
     },
     {
       "name": "totals",
-      "source": "raw",
+      "source": "sized",
       "transform": [
         {
           "type": "aggregate",
@@ -60,74 +84,50 @@
           "as": ["maxW"]
         }
       ]
-    },
-    {
-      "name": "table",
-      "source": "raw",
-      "transform": [
-        {"type": "collect", "sort": {"field": "widthM", "order": "descending"}},
-        {
-          "type": "window",
-          "ops": ["row_number", "sum"],
-          "fields": [null, "heightM"],
-          "as": ["idx", "cumH"],
-          "frame": [null, 0]
-        }
-      ]
     }
   ],
 
   "signals": [
+    {
+      "name": "k",
+      "value": 20,
+      "bind": {
+        "input": "range",
+        "min": 5,
+        "max": 40,
+        "step": 1,
+        "name": "Scale (pixels per metre): "
+      }
+    },
     {"name": "leftPad", "value": 20},
     {"name": "labelH", "value": 20},
     {"name": "gap", "value": 14},
     {
-      "name": "k",
-      "update": "(width - leftPad) / data('totals')[0].maxWidthM"
+      "name": "width",
+      "update": "leftPad + (data('totals')[0] ? data('totals')[0].maxWidthM : 30) * k + 20"
     },
     {
       "name": "stackH",
-      "update": "data('totals')[0].n * labelH + (data('totals')[0].n - 1) * gap + data('totals')[0].sumHeightM * k"
+      "update": "data('totals')[0] ? data('totals')[0].n * labelH + (data('totals')[0].n - 1) * gap + data('totals')[0].sumHeightM * k : 100"
     },
     {"name": "height", "update": "stackH + 70"}
   ],
 
   "marks": [
     {
-      "type": "rect",
-      "name": "whaleBoxes",
+      "type": "path",
+      "name": "silhouettes",
       "from": {"data": "table"},
       "encode": {
         "update": {
-          "x": {"signal": "leftPad"},
-          "width": {"signal": "k * datum.widthM"},
-          "y": {"signal": "datum.idx * labelH + (datum.idx - 1) * gap + (datum.cumH - datum.heightM) * k"},
-          "height": {"signal": "k * datum.heightM"},
+          "path": {"field": "d"},
+          "scaleX": {"signal": "k * datum.widthM / (datum.vbW || 1)"},
+          "scaleY": {"signal": "k * datum.heightM / (datum.vbH || 1)"},
+          "x": {"signal": "leftPad - (datum.vbX || 0) * k * datum.widthM / (datum.vbW || 1)"},
+          "y": {"signal": "datum.idx * labelH + (datum.idx - 1) * gap + (datum.cumH - datum.heightM) * k - (datum.vbY || 0) * k * datum.heightM / (datum.vbH || 1)"},
           "fill": {
-            "signal": "datum.isWhale ? hcl((datum.idx * 137.5) % 360, 55, 35 + 45 * datum['Weight (metric tons)'] / data('whalesOnly')[0].maxW) : 'transparent'"
+            "signal": "datum.isWhale ? hcl((datum.idx * 137.5) % 360, 55, 35 + 45 * datum['Weight (metric tons)'] / data('whalesOnly')[0].maxW) : '#333333'"
           },
-          "tooltip": {
-            "signal": "{'Species': datum.Species, 'Length (m)': datum['Length (m)'], 'Height (m)': datum['Height (m)'], 'Weight (metric tons)': datum['Weight (metric tons)']}"
-          }
-        }
-      }
-    },
-    {
-      "type": "image",
-      "name": "images",
-      "from": {"data": "table"},
-      "encode": {
-        "enter": {
-          "url": {"field": "url"},
-          "aspect": {"value": false},
-          "align": {"value": "left"},
-          "baseline": {"value": "top"}
-        },
-        "update": {
-          "x": {"signal": "leftPad"},
-          "width": {"signal": "k * datum.widthM"},
-          "height": {"signal": "k * datum.heightM"},
-          "y": {"signal": "datum.idx * labelH + (datum.idx - 1) * gap + (datum.cumH - datum.heightM) * k"},
           "tooltip": {
             "signal": "{'Species': datum.Species, 'Length (m)': datum['Length (m)'], 'Height (m)': datum['Height (m)'], 'Weight (metric tons)': datum['Weight (metric tons)']}"
           }
@@ -148,7 +148,7 @@
         "update": {
           "x": {"signal": "leftPad"},
           "y": {"signal": "datum.idx * labelH + (datum.idx - 1) * gap + (datum.cumH - datum.heightM) * k - 4"},
-          "text": {"signal": "datum.Species + '  (' + datum['Length (m)'] + ' m, ' + datum['Weight (metric tons)'] + ' t)'"}
+          "text": {"signal": "datum.Species"}
         }
       }
     },

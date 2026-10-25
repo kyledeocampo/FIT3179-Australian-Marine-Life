@@ -1,0 +1,204 @@
+{
+    "$schema": "https://vega.github.io/schema/vega/v6.json",
+    "description": "Queensland sea turtle nesting localities as a proportional circular symbol map. Circle area is proportional to the nesting score; colour shows the highest beach significance in each locality.",
+    "width": 900,
+    "height": 650,
+    "padding": 0,
+    "autosize": "none",
+    "background": "#000000",
+  
+    "signals": [
+      {"name": "maxCircleArea", "value": 2400},
+  
+      {"name": "aeaA", "value": 6378137},
+      {"name": "aeaE2", "value": 0.006694380022900787},
+      {"name": "aeaN", "value": 0.32381291020862324},
+      {"name": "aeaC", "value": 1.0944602825567231},
+      {"name": "aeaRho0", "value": 20606284.263343588},
+      {"name": "aeaQp", "value": 1.9955310874809384},
+      {"name": "aeaLon0", "value": 146}
+    ],
+  
+    "projections": [
+      {
+        "name": "projection",
+        "type": "mercator",
+        "center": [146, -19],
+        "scale": 1600,
+        "translate": [450, 325],
+        "clipExtent": [[0, 0], [900, 650]]
+      }
+    ],
+  
+    "data": [
+      {
+        "name": "countries",
+        "url": "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_50m_admin_0_countries.geojson",
+        "format": {"type": "json", "property": "features"},
+        "transform": [
+          {"type": "filter", "expr": "datum.properties.ADMIN === 'Australia' || datum.properties.ADMIN === 'Papua New Guinea'"},
+          {"type": "geoshape", "projection": "projection", "as": "shape"}
+        ]
+      },
+  
+      {
+        "name": "nesting",
+        "url": "https://raw.githubusercontent.com/kyledeocampo/FIT3179-Australian-Marine-Life/refs/heads/main/data/AML%20-%20Sea%20Turtle%20Nesting%20Data.csv",
+        "format": {
+          "type": "csv",
+          "parse": {"X": "number", "Y": "number", "Longitude": "number", "Latitude": "number"}
+        },
+        "transform": [
+          {"type": "formula", "as": "ax", "expr": "datum.X"},
+          {"type": "formula", "as": "ay", "expr": "aeaRho0 + datum.Y"},
+          {"type": "formula", "as": "arho", "expr": "sqrt(datum.ax * datum.ax + datum.ay * datum.ay)"},
+          {"type": "formula", "as": "aq", "expr": "(aeaC - pow(datum.arho * aeaN / aeaA, 2)) / aeaN"},
+          {"type": "formula", "as": "abeta", "expr": "asin(datum.aq / aeaQp)"},
+          {
+            "type": "formula",
+            "as": "lon",
+            "expr": "isValid(datum.Longitude) ? datum.Longitude : aeaLon0 + (atan2(datum.ax, datum.ay) / aeaN) * 180 / PI"
+          },
+          {
+            "type": "formula",
+            "as": "lat",
+            "expr": "isValid(datum.Latitude) ? datum.Latitude : -((datum.abeta + (aeaE2 / 3 + 31 * pow(aeaE2, 2) / 180 + 517 * pow(aeaE2, 3) / 5040) * sin(2 * datum.abeta) + (23 * pow(aeaE2, 2) / 360 + 251 * pow(aeaE2, 3) / 3780) * sin(4 * datum.abeta) + (761 * pow(aeaE2, 3) / 45360) * sin(6 * datum.abeta)) * 180 / PI)"
+          },
+          {
+            "type": "filter",
+            "expr": "isValid(datum.lat) && isValid(datum.lon) && datum.lat >= -45 && datum.lat <= -8 && datum.lon >= 110 && datum.lon <= 155"
+          },
+          {
+            "type": "formula",
+            "as": "weight",
+            "expr": "lower(trim(datum.significance)) === 'very significant' ? 3 : (lower(trim(datum.significance)) === 'significant' ? 2 : 1)"
+          },
+          {
+            "type": "formula",
+            "as": "site",
+            "expr": "(isValid(datum.locality) && trim(datum.locality) !== '') ? trim(datum.locality) : 'unnamed ' + round(datum.lon * 1000) + ',' + round(datum.lat * 1000)"
+          }
+        ]
+      },
+  
+      {
+        "name": "sites",
+        "source": "nesting",
+        "transform": [
+          {
+            "type": "aggregate",
+            "groupby": ["site"],
+            "ops": ["mean", "mean", "sum", "count", "max"],
+            "fields": ["lon", "lat", "weight", "weight", "weight"],
+            "as": ["lon", "lat", "score", "beaches", "topWeight"]
+          },
+          {
+            "type": "formula",
+            "as": "topLabel",
+            "expr": "datum.topWeight === 3 ? 'Very significant' : (datum.topWeight === 2 ? 'Significant' : 'Present')"
+          },
+          {
+            "type": "formula",
+            "as": "name",
+            "expr": "indexof(datum.site, 'unnamed ') === 0 ? 'Unnamed beach' : datum.site"
+          },
+          {
+            "type": "geopoint",
+            "projection": "projection",
+            "fields": ["lon", "lat"],
+            "as": ["px", "py"]
+          },
+          {"type": "filter", "expr": "isValid(datum.px) && isValid(datum.py)"},
+          {"type": "collect", "sort": {"field": "score", "order": "descending"}}
+        ]
+      }
+    ],
+  
+    "scales": [
+      {
+        "name": "sizeScale",
+        "type": "linear",
+        "zero": true,
+        "domain": {"data": "sites", "field": "score"},
+        "range": [0, {"signal": "maxCircleArea"}]
+      },
+      {
+        "name": "significanceColor",
+        "type": "ordinal",
+        "domain": ["Present", "Significant", "Very significant"],
+        "range": ["#2ec4ff", "#ff9f1c", "#ff2d87"]
+      }
+    ],
+  
+    "legends": [
+      {
+        "fill": "significanceColor",
+        "title": "Highest beach significance",
+        "orient": "bottom-left",
+        "offset": 20,
+        "symbolType": "circle",
+        "symbolSize": 140,
+        "symbolOpacity": 0.7,
+        "titleColor": "#ffffff",
+        "labelColor": "#ffffff"
+      },
+      {
+        "size": "sizeScale",
+        "title": "Nesting score",
+        "orient": "bottom-right",
+        "offset": 20,
+        "values": [1, 5, 20, 60, 120],
+        "rowPadding": 6,
+        "titleColor": "#ffffff",
+        "labelColor": "#ffffff",
+        "encode": {
+          "symbols": {
+            "update": {
+              "fill": {"value": "#cccccc"},
+              "fillOpacity": {"value": 0.5},
+              "stroke": {"value": "#cccccc"},
+              "strokeWidth": {"value": 0.8}
+            }
+          }
+        }
+      }
+    ],
+  
+    "marks": [
+      {
+        "type": "shape",
+        "name": "land",
+        "from": {"data": "countries"},
+        "encode": {
+          "update": {
+            "shape": {"field": "shape"},
+            "fill": {"value": "#1a1a1a"},
+            "stroke": {"value": "#555555"},
+            "strokeWidth": {"value": 0.8}
+          }
+        }
+      },
+  
+      {
+        "type": "symbol",
+        "name": "nestingCircles",
+        "from": {"data": "sites"},
+        "encode": {
+          "update": {
+            "x": {"field": "px"},
+            "y": {"field": "py"},
+            "shape": {"value": "circle"},
+            "size": {"scale": "sizeScale", "field": "score"},
+            "fill": {"scale": "significanceColor", "field": "topLabel"},
+            "fillOpacity": {"value": 0.45},
+            "stroke": {"scale": "significanceColor", "field": "topLabel"},
+            "strokeOpacity": {"value": 0.9},
+            "strokeWidth": {"value": 0.8},
+            "tooltip": {
+              "signal": "{'Locality': datum.name, 'Nesting score': datum.score, 'Beach records': datum.beaches, 'Highest significance': datum.topLabel}"
+            }
+          }
+        }
+      }
+    ]
+  }

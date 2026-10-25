@@ -29,126 +29,35 @@
       {
         "name": "input",
         "values": [
-          {
-            "category": "Server Products & Cloud",
-            "stack": 1,
-            "sort": 1,
-            "labels": "left"
-          },
-          {
-            "category": "Enterprise Services",
-            "stack": 1,
-            "sort": 2,
-            "labels": "left",
-            "gap": 20
-          },
-          {
-            "category": "Office Products",
-            "stack": 1,
-            "sort": 3,
-            "labels": "left"
-          },
-          {"category": "LinkedIn", "stack": 1, "sort": 4, "labels": "left"},
-          {"category": "Other", "stack": 1, "sort": 5, "labels": "left"},
-          {"category": "Windows", "stack": 1, "sort": 6, "labels": "left"},
-          {"category": "Gaming", "stack": 1, "sort": 7, "labels": "left"},
-          {
-            "category": "Search & News Advertising",
-            "stack": 1,
-            "sort": 8,
-            "labels": "left"
-          },
-          {"category": "Devices", "stack": 1, "sort": 9, "labels": "left"},
-          {"category": "Intelligent Cloud", "stack": 2, "sort": 1},
-          {"category": "Productivity", "stack": 2, "sort": 2},
-          {"category": "Personal Computing", "stack": 2, "sort": 3},
-          {"category": "Revenue", "stack": 3},
-          {"category": "Gross Profit", "stack": 4, "sort": 1, "gap": 30},
-          {"category": "Cost of Revenue", "stack": 4, "sort": 2, "gap": 30},
-          {"category": "Operating Profit", "stack": 5, "sort": 1, "gap": 60},
-          {"category": "Operating Expenses", "stack": 5, "sort": 2, "gap": 30},
-          {"category": "Product Costs", "stack": 5, "sort": 3, "gap": 20},
-          {"category": "Service Costs", "stack": 5, "sort": 4, "gap": 20},
-          {"category": "Net Profit", "stack": 6, "sort": 1, "gap": 0},
-          {"category": "Tax", "stack": 6, "sort": 2, "gap": 0},
-          {"category": "R&D", "stack": 6, "sort": 3, "gap": 20},
-          {"category": "S&M", "stack": 6, "sort": 4, "gap": 0},
-          {"category": "G&A", "stack": 6, "sort": 5, "gap": 0},
-          {
-            "source": "Server Products & Cloud",
-            "destination": "Intelligent Cloud",
-            "value": 19.6
-          },
-          {
-            "source": "Enterprise Services",
-            "destination": "Intelligent Cloud",
-            "value": 1.9
-          },
-          {
-            "source": "Office Products",
-            "destination": "Productivity",
-            "value": 11.8
-          },
-          {"source": "LinkedIn", "destination": "Productivity", "value": 3.9},
-          {"source": "Other", "destination": "Productivity", "value": 1.3},
-          {
-            "source": "Windows",
-            "destination": "Personal Computing",
-            "value": 4.8
-          },
-          {"source": "Gaming", "destination": "Personal Computing", "value": 4.8},
-          {
-            "source": "Search & News Advertising",
-            "destination": "Personal Computing",
-            "value": 3.2
-          },
-          {
-            "source": "Devices",
-            "destination": "Personal Computing",
-            "value": 1.4
-          },
-          {
-            "source": "Intelligent Cloud",
-            "destination": "Revenue",
-            "value": 21.5
-          },
-          {"source": "Productivity", "destination": "Revenue", "value": 17},
-          {
-            "source": "Personal Computing",
-            "destination": "Revenue",
-            "value": 14.2
-          },
-          {"source": "Revenue", "destination": "Gross Profit", "value": 35.2},
-          {"source": "Revenue", "destination": "Cost of Revenue", "value": 17.5},
-          {
-            "source": "Gross Profit",
-            "destination": "Operating Profit",
-            "value": 20.4
-          },
-          {
-            "source": "Gross Profit",
-            "destination": "Operating Expenses",
-            "value": 14.8
-          },
-          {
-            "source": "Cost of Revenue",
-            "destination": "Product Costs",
-            "value": 5.7
-          },
-          {
-            "source": "Cost of Revenue",
-            "destination": "Service Costs",
-            "value": 11.8
-          },
-          {
-            "source": "Operating Profit",
-            "destination": "Net Profit",
-            "value": 16.4
-          },
-          {"source": "Operating Profit", "destination": "Tax", "value": 3.9},
-          {"source": "Operating Expenses", "destination": "R&D", "value": 6.8},
-          {"source": "Operating Expenses", "destination": "S&M", "value": 5.7},
-          {"source": "Operating Expenses", "destination": "G&A", "value": 2.3}
+          {"category": "Flatback Turtle", "stack": 1, "sort": 1, "labels": "left"},
+          {"category": "Green Turtle", "stack": 1, "sort": 2, "labels": "left"},
+          {"category": "Hawksbill Turtle", "stack": 1, "sort": 3, "labels": "left"},
+          {"category": "Leatherback Turtle", "stack": 1, "sort": 4, "labels": "left"},
+          {"category": "Loggerhead Turtle", "stack": 1, "sort": 5, "labels": "left"},
+          {"category": "Olive Ridley Turtle", "stack": 1, "sort": 6, "labels": "left"},
+          {"category": "Kemp's Ridley Turtle", "stack": 1, "sort": 7, "labels": "left"},
+      
+          {"category": "Australia", "stack": 2, "sort": 1, "labels": "right"},
+          {"category": "United States of America", "stack": 2, "sort": 2, "labels": "right"},
+      
+          {"category": "Critically Endangered", "stack": 3, "sort": 1, "labels": "right"},
+          {"category": "Endangered", "stack": 3, "sort": 2, "labels": "right"},
+          {"category": "Vulnerable", "stack": 3, "sort": 3, "labels": "right"},
+          {"category": "Least Concern", "stack": 3, "sort": 4, "labels": "right"},
+      
+          {"source": "Flatback Turtle", "destination": "Australia", "value": 1},
+          {"source": "Green Turtle", "destination": "Australia", "value": 1},
+          {"source": "Hawksbill Turtle", "destination": "Australia", "value": 1},
+          {"source": "Leatherback Turtle", "destination": "Australia", "value": 1},
+          {"source": "Loggerhead Turtle", "destination": "Australia", "value": 1},
+          {"source": "Olive Ridley Turtle", "destination": "Australia", "value": 1},
+          {"source": "Kemp's Ridley Turtle", "destination": "United States of America", "value": 1},
+      
+          {"source": "Australia", "destination": "Endangered", "value": 1},
+          {"source": "Australia", "destination": "Least Concern", "value": 1},
+          {"source": "Australia", "destination": "Critically Endangered", "value": 1},
+          {"source": "Australia", "destination": "Vulnerable", "value": 3},
+          {"source": "United States of America", "destination": "Critically Endangered", "value": 1}
         ]
       },
       {
@@ -352,9 +261,9 @@
             "stroke": {"scale": "color", "field": "name"}
           },
           "hover": {
-            "tooltip": {
-              "signal": "{'Name':datum.name, 'Value':format(datum.value, '$') + 'B'}"
-            },
+          "tooltip": {
+            "signal": "{'Category': datum.name, 'Species count': datum.value}"
+          },
             "fillOpacity": {"value": 1}
           }
         }
@@ -373,9 +282,9 @@
           },
           "hover": {
             "strokeOpacity": {"value": 1},
-            "tooltip": {
-              "signal": "{'Source':datum.source,'Destination':datum.destination, 'Value':format(datum.value, '$') + 'B'}"
-            }
+          "tooltip": {
+            "signal": "{'From': datum.source, 'To': datum.destination, 'Species count': datum.value}"
+          }
           }
         }
       },
@@ -427,7 +336,7 @@
               "update": {
                 "x": {"value": 0},
                 "y": {"value": 12},
-                "text": {"signal": " format(datum.value, '$') + 'B'"},
+                "text": {"signal": "format(datum.value, '.0f') + ' species'"},
                 "align": {"signal": "datum.labels=='left'?'right':'left'"}
               }
             }

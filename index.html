@@ -167,6 +167,9 @@
             dolore magna aliqua. Massa sapien faucibus et molestie ac feugiat sed. </p>
         </div>
       </div>
+      <div class="pure-u-1-2">
+        <div id="vis8" class="vis-container"></div>
+      </div>
     </div>
     <!-- end pure grid group -->
 
@@ -254,16 +257,17 @@
   </div> <!-- end page -->
   
   <script type="text/javascript">
-    var specVis1 = "./js/whaleradialbar.json";
-    var specVis2 = "./js/whalepictogram.json";
+    var specVis2 = "./js/whaleradialbar.json";
+    var specVis3 = "./js/whalepictogram.json";
+    var specVis8 = "./js/seaturtlesankey.json";
 
-    vegaEmbed('#vis1', specVis1, { "actions": false });
+    vegaEmbed('#vis2', specVis2, { "actions": false });
 
-    vegaEmbed('#vis2', specVis2, { "actions": false }).then(function (result) {
+    vegaEmbed('#vis3', specVis3, { "actions": false }).then(function (result) {
       // Access the Vega view instance (https://vega.github.io/vega/docs/api/view/) as result.view
     }).catch(console.error);
 
-    vegaEmbed('#vis3', specVis1, { "actions": false }).then(function (result) {
+    vegaEmbed('#vis8', specVis8, { "actions": false }).then(function (result) {
       // Access the Vega view instance (https://vega.github.io/vega/docs/api/view/) as result.view
     }).catch(console.error);
 

@@ -1,0 +1,68 @@
+{
+    "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+    "description": "Number of Australian dolphin sightings over time.",
+    "data": {
+      "url": "data/AML_Dolphin_Sightings_With_Year.csv",
+      "format": {
+        "type": "csv"
+      }
+    },
+    "transform": [
+      {
+        "filter": "isValid(datum.Year) && datum.Year != 'n.d.' && datum.Year != ''"
+      },
+      {
+        "aggregate": [
+          {
+            "op": "count",
+            "as": "Sightings"
+          }
+        ],
+        "groupby": ["Year"]
+      },
+      {
+        "calculate": "toNumber(datum.Year)",
+        "as": "YearNumeric"
+      }
+    ],
+    "mark": {
+      "type": "line",
+      "point": {
+        "filled": true,
+        "size": 60
+      },
+      "tooltip": true
+    },
+    "encoding": {
+      "x": {
+        "field": "YearNumeric",
+        "type": "quantitative",
+        "title": "Year",
+        "axis": {
+          "format": "d",
+          "tickMinStep": 1
+        }
+      },
+      "y": {
+        "field": "Sightings",
+        "type": "quantitative",
+        "title": "Number of Sightings",
+        "axis": {
+          "format": "d"
+        }
+      },
+      "tooltip": [
+        {
+          "field": "YearNumeric",
+          "type": "quantitative",
+          "title": "Year",
+          "format": "d"
+        },
+        {
+          "field": "Sightings",
+          "type": "quantitative",
+          "title": "Number of Sightings"
+        }
+      ]
+    }
+  }

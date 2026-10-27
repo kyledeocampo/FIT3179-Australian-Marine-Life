@@ -14,15 +14,15 @@
       "format": {
         "type": "csv",
         "parse": {
-          "Length (m)": "number",
-          "Height (m)": "number",
-          "Weight (metric tons)": "number"
+          "Length": "number",
+          "Height": "number",
+          "Weight": "number"
         }
       },
       "transform": [
         {
           "type": "filter",
-          "expr": "isValid(datum['Length (m)']) && isValid(datum['Height (m)']) && isValid(datum['Weight (metric tons)'])"
+          "expr": "isValid(datum['Length']) && isValid(datum['Height']) && isValid(datum['Weight'])"
         },
         {"type": "formula", "as": "isWhale", "expr": "indexof(lower(datum.Species), 'whale') >= 0"},
         {"type": "formula", "as": "isPerson", "expr": "indexof(lower(datum.Species), 'human') >= 0 || indexof(lower(datum.Species), 'person') >= 0"}
@@ -42,8 +42,8 @@
           "default": null
         },
         {"type": "formula", "as": "aspect", "expr": "datum.vbW ? datum.vbH / datum.vbW : 0.5"},
-        {"type": "formula", "as": "heightM", "expr": "datum.isPerson ? datum['Height (m)'] : datum['Length (m)'] * datum.aspect"},
-        {"type": "formula", "as": "widthM", "expr": "datum.isPerson ? datum.heightM / datum.aspect : datum['Length (m)']"}
+        {"type": "formula", "as": "heightM", "expr": "datum.isPerson ? datum['Height'] : datum['Length'] * datum.aspect"},
+        {"type": "formula", "as": "widthM", "expr": "datum.isPerson ? datum.heightM / datum.aspect : datum['Length']"}
       ]
     },
     {
@@ -79,7 +79,7 @@
         {"type": "filter", "expr": "datum.isWhale"},
         {
           "type": "aggregate",
-          "fields": ["Weight (metric tons)"],
+          "fields": ["Weight"],
           "ops": ["max"],
           "as": ["maxW"]
         }
@@ -90,14 +90,7 @@
   "signals": [
     {
       "name": "k",
-      "value": 20,
-      "bind": {
-        "input": "range",
-        "min": 5,
-        "max": 40,
-        "step": 1,
-        "name": "Scale (pixels per metre): "
-      }
+      "value": 25
     },
     {"name": "leftPad", "value": 20},
     {"name": "labelH", "value": 20},
@@ -126,10 +119,10 @@
           "x": {"signal": "leftPad - (datum.vbX || 0) * k * datum.widthM / (datum.vbW || 1)"},
           "y": {"signal": "datum.idx * labelH + (datum.idx - 1) * gap + (datum.cumH - datum.heightM) * k - (datum.vbY || 0) * k * datum.heightM / (datum.vbH || 1)"},
           "fill": {
-            "signal": "datum.isWhale ? hcl((datum.idx * 137.5) % 360, 55, 35 + 45 * datum['Weight (metric tons)'] / data('whalesOnly')[0].maxW) : '#333333'"
+            "signal": "datum.isWhale ? hcl((datum.idx * 137.5) % 360, 55, 35 + 45 * datum['Weight'] / data('whalesOnly')[0].maxW) : '#333333'"
           },
           "tooltip": {
-            "signal": "{'Species': datum.Species, 'Length (m)': datum['Length (m)'], 'Height (m)': datum['Height (m)'], 'Weight (metric tons)': datum['Weight (metric tons)']}"
+            "signal": "{'Species': datum.Species, 'Length': datum['Length'], 'Height': datum['Height'], 'Weight': datum['Weight']}"
           }
         }
       }

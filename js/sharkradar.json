@@ -1,18 +1,39 @@
-
 {
   "$schema": "https://vega.github.io/schema/vega/v6.json",
   "description": "Radar chart comparing shark species and specifications.",
-  "width": 500,
-  "height": 500,
-  "padding": 90,
+  "padding": 10,
   "autosize": {
-    "type": "none",
+    "type": "fit",
     "contains": "padding"
   },
   "signals": [
     {
+      "name": "width",
+      "init": "containerSize()[0] > 50 ? containerSize()[0] : 500",
+      "on": [
+        {
+          "events": "window:resize",
+          "update": "containerSize()[0] > 50 ? containerSize()[0] : 500"
+        }
+      ]
+    },
+    {
+      "name": "height",
+      "init": "containerSize()[1] > 50 ? containerSize()[1] : 500",
+      "on": [
+        {
+          "events": "window:resize",
+          "update": "containerSize()[1] > 50 ? containerSize()[1] : 500"
+        }
+      ]
+    },
+    {
+      "name": "barHeight",
+      "value": 50
+    },
+    {
       "name": "radius",
-      "update": "min(width, height) / 2 - 45"
+      "update": "max(50, min((height - barHeight) / 2 - 40, (width / 2 - 125) / 0.71 - 18))"
     },
     {
       "name": "centerX",
@@ -20,7 +41,19 @@
     },
     {
       "name": "centerY",
-      "update": "height / 2"
+      "update": "(height - barHeight) / 2"
+    },
+    {
+      "name": "barWidth",
+      "update": "min(width - 40, 560)"
+    },
+    {
+      "name": "barLeft",
+      "update": "(width - barWidth) / 2"
+    },
+    {
+      "name": "barTop",
+      "update": "height - 36"
     }
   ],
   "data": [
@@ -37,16 +70,8 @@
       "transform": [
         {
           "type": "fold",
-          "fields": [
-            "Length",
-            "Weight",
-            "Lifespan",
-            "Conservation Status"
-          ],
-          "as": [
-            "metric",
-            "value"
-          ]
+          "fields": ["Length", "Weight", "Lifespan", "Conservation Status"],
+          "as": ["metric", "value"]
         },
         {
           "type": "formula",
@@ -59,20 +84,19 @@
           "expr": "datum.metric === 'Length' ? (toNumber(datum.value) - 3) / 3 : datum.metric === 'Weight' ? (toNumber(datum.value) - 70) / 1830 : datum.metric === 'Lifespan' ? (toNumber(datum.value) - 22) / 48 : (toNumber(datum.value) - 1) / 6"
         },
         {
+          "type": "formula",
+          "as": "display",
+          "expr": "datum.metric === 'Length' ? datum.value + ' m' : datum.metric === 'Weight' ? datum.value + ' kg' : datum.metric === 'Lifespan' ? datum.value + ' Years' : '' + datum.value"
+        },
+        {
           "type": "filter",
           "expr": "isValid(toNumber(datum.value))"
         },
         {
           "type": "collect",
           "sort": {
-            "field": [
-              "Species",
-              "metricOrder"
-            ],
-            "order": [
-              "ascending",
-              "ascending"
-            ]
+            "field": ["Species", "metricOrder"],
+            "order": ["ascending", "ascending"]
           }
         }
       ]
@@ -83,10 +107,7 @@
       "transform": [
         {
           "type": "aggregate",
-          "groupby": [
-            "metric",
-            "metricOrder"
-          ]
+          "groupby": ["metric", "metricOrder"]
         },
         {
           "type": "collect",
@@ -100,11 +121,21 @@
     {
       "name": "rings",
       "values": [
-        {"level": 0.2},
-        {"level": 0.4},
-        {"level": 0.6},
-        {"level": 0.8},
+        {"level": 0.33},
+        {"level": 0.66},
         {"level": 1.0}
+      ]
+    },
+    {
+      "name": "status",
+      "values": [
+        {"code": "LC", "num": 1, "color": "#60C659"},
+        {"code": "NT", "num": 2, "color": "#CCE226"},
+        {"code": "VU", "num": 3, "color": "#F9E814"},
+        {"code": "EN", "num": 4, "color": "#FC7F3F"},
+        {"code": "CR", "num": 5, "color": "#D81E05"},
+        {"code": "EW", "num": 6, "color": "#542344"},
+        {"code": "EX", "num": 7, "color": "#000000"}
       ]
     }
   ],
@@ -139,6 +170,29 @@
       "range": {
         "scheme": "category10"
       }
+    },
+    {
+      "name": "statusX",
+      "type": "band",
+      "domain": {
+        "data": "status",
+        "field": "code"
+      },
+      "range": [0, {"signal": "barWidth"}],
+      "padding": 0
+    }
+  ],
+  "legends": [
+    {
+      "fill": "color",
+      "title": "Species",
+      "orient": "top-left",
+      "direction": "vertical",
+      "symbolType": "circle",
+      "symbolSize": 100,
+      "titleFontSize": 12,
+      "labelFontSize": 11,
+      "offset": 0
     }
   ],
   "marks": [
@@ -164,11 +218,11 @@
               "y": {"value": 0},
               "shape": {"value": "circle"},
               "size": {
-                "signal": "pow(scale('radial', datum.level) * 2, 2) * PI"
+                "signal": "pow(scale('radial', datum.level), 2) * PI"
               },
               "fill": {"value": "white"},
               "fillOpacity": {"value": 0},
-              "stroke": {"value": "#cbd5e1"},
+              "stroke": {"value": "black"},
               "strokeWidth": {"value": 1}
             }
           }
@@ -219,15 +273,9 @@
                   "y": {
                     "signal": "scale('radial', datum.normalised) * sin(scale('angular', datum.metric) - PI / 2)"
                   },
-                  "stroke": {
-                    "scale": "color",
-                    "field": "Species"
-                  },
+                  "stroke": {"scale": "color", "field": "Species"},
                   "strokeWidth": {"value": 2.5},
-                  "fill": {
-                    "scale": "color",
-                    "field": "Species"
-                  },
+                  "fill": {"scale": "color", "field": "Species"},
                   "fillOpacity": {"value": 0.15},
                   "interpolate": {"value": "linear-closed"}
                 }
@@ -238,6 +286,9 @@
               "name": "species-points",
               "from": {"data": "speciesData"},
               "encode": {
+                "enter": {
+                  "cursor": {"value": "pointer"}
+                },
                 "update": {
                   "x": {
                     "signal": "scale('radial', datum.normalised) * cos(scale('angular', datum.metric) - PI / 2)"
@@ -245,13 +296,17 @@
                   "y": {
                     "signal": "scale('radial', datum.normalised) * sin(scale('angular', datum.metric) - PI / 2)"
                   },
-                  "size": {"value": 55},
-                  "fill": {
-                    "scale": "color",
-                    "field": "Species"
-                  },
+                  "size": {"value": 80},
+                  "fill": {"scale": "color", "field": "Species"},
                   "stroke": {"value": "white"},
-                  "strokeWidth": {"value": 1}
+                  "strokeWidth": {"value": 1},
+                  "tooltip": {
+                    "signal": "{'Species': datum.Species, 'Metric': datum.metric, 'Value': datum.display}"
+                  }
+                },
+                "hover": {
+                  "size": {"value": 160},
+                  "strokeWidth": {"value": 2}
                 }
               }
             }
@@ -283,6 +338,56 @@
           }
         }
       ]
+    },
+    {
+      "type": "rect",
+      "name": "status-bar",
+      "from": {"data": "status"},
+      "encode": {
+        "update": {
+          "x": {"signal": "barLeft + scale('statusX', datum.code)"},
+          "width": {"signal": "bandwidth('statusX')"},
+          "y": {"signal": "barTop"},
+          "height": {"value": 14},
+          "fill": {"field": "color"},
+          "stroke": {"value": "white"},
+          "strokeWidth": {"value": 1}
+        }
+      }
+    },
+    {
+      "type": "text",
+      "name": "status-numbers",
+      "from": {"data": "status"},
+      "encode": {
+        "update": {
+          "x": {"signal": "barLeft + scale('statusX', datum.code) + bandwidth('statusX') / 2"},
+          "y": {"signal": "barTop - 4"},
+          "text": {"field": "num"},
+          "align": {"value": "center"},
+          "baseline": {"value": "bottom"},
+          "fontSize": {"value": 12},
+          "fontWeight": {"value": "bold"},
+          "fill": {"value": "#1f2937"}
+        }
+      }
+    },
+    {
+      "type": "text",
+      "name": "status-labels",
+      "from": {"data": "status"},
+      "encode": {
+        "update": {
+          "x": {"signal": "barLeft + scale('statusX', datum.code) + bandwidth('statusX') / 2"},
+          "y": {"signal": "barTop + 18"},
+          "text": {"field": "code"},
+          "align": {"value": "center"},
+          "baseline": {"value": "top"},
+          "fontSize": {"value": 12},
+          "fontWeight": {"value": "bold"},
+          "fill": {"value": "#1f2937"}
+        }
+      }
     }
   ]
 }

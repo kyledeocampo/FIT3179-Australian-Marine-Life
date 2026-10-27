@@ -1,14 +1,14 @@
 
 {
   "$schema": "https://vega.github.io/schema/vega/v5.json",
-  "width": 500,
-  "height": 500,
+  "width": 700,
+  "height": 700,
   "padding": 0,
   "autosize": "none",
 
   "signals": [
-    {"name": "startAngle", "value": -2.5},
-    {"name": "endAngle", "value": 2.5},
+    {"name": "startAngle", "value": -3.14},
+    {"name": "endAngle", "value": 1.552},
     {"name": "padAngle", "value": 0},
     {"name": "bandPadding", "value": 0.15},
     {"name": "innerRadius", "value": 60},
@@ -119,6 +119,30 @@
         "hover": {
           "stroke": {"value": "#222222"},
           "strokeWidth": {"value": 2}
+        }
+      }
+    },
+    {
+      "type": "text",
+      "name": "barLabels",
+      "from": {"data": "table"},
+      "interactive": false,
+      "encode": {
+        "enter": {
+          "text": {"field": "Name"},
+          "align": {"value": "left"},
+          "baseline": {"value": "middle"},
+          "fill": {"value": "#000000"},
+          "fontSize": {"value": 14},
+          "fontWeight": {"value": "bold"}
+        },
+        "update": {
+          "x": {
+            "signal": "width / 2 + (scale('radius', datum.Name) + bandwidth('radius') / 2) * sin(startAngle) + 6"
+          },
+          "y": {
+            "signal": "height / 2 - (scale('radius', datum.Name) + bandwidth('radius') / 2) * cos(startAngle)"
+          }
         }
       }
     }

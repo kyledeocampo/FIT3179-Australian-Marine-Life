@@ -86,10 +86,12 @@
         "fill": "speciesColor",
         "title": "Shark species",
         "orient": "bottom-left",
-        "offset": 20,
+        "offset": 10,
         "symbolType": "circle",
         "symbolSize": 140,
         "titleColor": "#000000",
+        "titleFontSize":24,
+        "labelFontSize":24,
         "labelColor": "#000000"
       }
     ],

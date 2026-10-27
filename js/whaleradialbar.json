@@ -100,7 +100,7 @@
         },
         "update": {
           "fill": {
-            "signal": "datum.Population < 1000 ? '#ff0000' : '#008000'"
+            "signal": "datum.Population < 1000 ? '#ffA500' : '#008000'"
           },
           "startAngle": {"signal": "startAngle"},
           "endAngle": {

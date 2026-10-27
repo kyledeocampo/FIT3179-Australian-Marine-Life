@@ -135,11 +135,15 @@
         "fill": "significanceColor",
         "title": "Breeding significance",
         "orient": "bottom-left",
-        "offset": 20,
+        "offset": 5,
         "symbolType": "circle",
         "symbolSize": 140,
         "symbolOpacity": 0.7,
         "titleColor": "#000000",
+        "titleFontSize": 24,
+        "titleLimit": 3000,
+        "labelFontSize": 24,
+        "labelLimit": 3000,
         "labelColor": "#000000"
       },
       {
@@ -150,6 +154,9 @@
         "values": [1, 5, 20, 60, 120],
         "rowPadding": 6,
         "titleColor": "#000000",
+        "titleFontSize": 24,
+        "titleLimit": 3000,
+        "labelFontSize": 24,
         "labelColor": "#000000",
         "encode": {
           "symbols": {

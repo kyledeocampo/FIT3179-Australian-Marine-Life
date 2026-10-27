@@ -122,7 +122,7 @@
             "signal": "datum.isWhale ? hcl((datum.idx * 137.5) % 360, 55, 35 + 45 * datum['Weight'] / data('whalesOnly')[0].maxW) : '#333333'"
           },
           "tooltip": {
-            "signal": "{'Species': datum.Species, 'Length': datum['Length'], 'Height': datum['Height'], 'Weight': datum['Weight']}"
+            "signal": "{'Species': datum.Species, 'Length': datum['Length'] + ' m', 'Height': datum['Height'] + ' m', 'Weight': datum['Weight'] + ' t'}"
           }
         }
       }
@@ -134,9 +134,9 @@
         "enter": {
           "align": {"value": "left"},
           "baseline": {"value": "bottom"},
-          "fontSize": {"value": 13},
+          "fontSize": {"value": 24},
           "fontWeight": {"value": "bold"},
-          "fill": {"value": "#263746"}
+          "fill": {"value": "#000000"}
         },
         "update": {
           "x": {"signal": "leftPad"},
@@ -152,7 +152,7 @@
           "x": {"signal": "leftPad"},
           "x2": {"signal": "leftPad + 5 * k"},
           "y": {"signal": "stackH + 30"},
-          "stroke": {"value": "#263746"},
+          "stroke": {"value": "#000000"},
           "strokeWidth": {"value": 2}
         }
       }
@@ -165,8 +165,8 @@
           "y": {"signal": "stackH + 38"},
           "baseline": {"value": "top"},
           "text": {"value": "Scale bar: 5 m"},
-          "fontSize": {"value": 12},
-          "fill": {"value": "#263746"}
+          "fontSize": {"value": 24},
+          "fill": {"value": "#000000"}
         }
       }
     }

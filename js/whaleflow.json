@@ -279,7 +279,8 @@
       "symbolType": "circle",
       "symbolSize": 140,
       "labelColor": "#000000",
-      "labelFontSize": 12
+      "labelLimit": 300,
+      "labelFontSize": 24
     }
   ],
   "marks": [

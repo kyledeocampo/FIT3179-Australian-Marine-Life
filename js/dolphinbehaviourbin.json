@@ -129,12 +129,15 @@
     {
       "fill": "behaviourColor",
       "title": "Dominant behaviour",
-      "orient": "bottom-left",
+      "orient": "bottom-right",
       "offset": 20,
       "symbolType": "square",
       "symbolSize": 140,
       "titleColor": "#000000",
-      "labelColor": "#000000"
+      "labelColor": "#000000",
+      "titleLimit":3000,
+      "titleFontSize": 24,
+      "labelFontSize": 24
     }
   ],
 

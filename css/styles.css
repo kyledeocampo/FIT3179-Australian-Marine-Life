@@ -97,14 +97,22 @@ body *{
   }
 
   .vis-wrapper {
-    position: relative;
+    position: relative;      /* anchor for the annotation */
+    width: fit-content;      /* wrapper hugs the chart, so % matches the chart */
+    max-width: 100%;
   }
   
-  .annotation {
-    position: absolute;
+  .vis-wrapper .annotation {
+    position: absolute;            /* change this to move it left or right */
+    right: auto;             /* cancels any inherited right value */
+    margin: 0;
+    transform: none;
+    width: max-content;
+    max-width: 220px;
+    z-index: 10;
     background: lightblue;
     padding: 0.4rem 0.8rem;
     border-radius: 6px;
     font-size: 1.5rem;
-    pointer-events: none; /* lets hover tooltips on the chart still work */
+    pointer-events: none;
   }

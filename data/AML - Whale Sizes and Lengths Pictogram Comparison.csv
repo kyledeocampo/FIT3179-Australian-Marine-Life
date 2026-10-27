@@ -1,4 +1,4 @@
-Species,Length (m),Height (m),Weight (metric tons),url
+Species,Length,Height,Weight,url
 Humpback Whales,16,3,36,images/whale-silhouette.svg
 Southern Right Whales,18,3.9,80,images/whale-silhouette.svg
 Blue Whales,30,5,200,images/whale-silhouette.svg

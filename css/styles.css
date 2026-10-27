@@ -7,17 +7,42 @@ body *{
   }
   
   body {
-	background-color: lightgray;
+	background-color: lightgrey;
   }
   
   .page {
-	width: 850px;
+	width: 1000px;
 	background-color: white;
 	margin: auto;
 	padding: 50px;
-	padding-top: 35px;
+	padding-top: 40px;
   }
+
+  .topic-section {
+    width: 1100px;
+    box-sizing: border-box;
   
+    position: relative;
+    left: 50%;
+    transform: translateX(-50%);
+  
+    margin: 0 auto 24px;
+    padding: 0px 50px;
+  
+    margin-bottom: 24px;
+    background: linear-gradient(#1B405A, white);
+  }
+
+  .bg-wave {
+    position: absolute;
+    top: -455px;
+    left: -59px;
+    width: 1213px;
+    height: auto;
+    z-index: -1;           /* behind the content */
+    pointer-events: none;
+  }
+
   .vis-container {
 	width: 100%;
   }
@@ -35,8 +60,12 @@ body *{
 	padding-right: 20px;
   }
   
+  .pure-g1{
+  margin-bottom: 0px
+  }
+
   .pure-g {
-	margin-bottom: 40px;
+	margin-bottom: 200px;
   }
   
   .small-font {

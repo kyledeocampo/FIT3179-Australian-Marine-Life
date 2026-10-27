@@ -1,0 +1,395 @@
+{
+  "$schema": "https://vega.github.io/schema/vega/v6.json",
+  "description": "Whale migration map: simplified flow arrows (size = number of tracks) plus optional dot/line tracks over time.",
+  "width": 1000,
+  "height": 650,
+  "padding": 0,
+  "autosize": "none",
+  "background": "#000000",
+  "signals": [
+    {
+      "name": "trackProgress",
+      "value": 100,
+      "bind": { "input": "range", "min": 0, "max": 100, "step": 1, "name": "Track progress (%)" }
+    },
+    {
+      "name": "mapMode",
+      "value": "Both Views",
+      "bind": {
+        "input": "select",
+        "name": "Map view: ",
+        "options": ["Both Views", "Whale Migration Flow", "Whale Migration Tracks"]
+      }
+    },
+    { "name": "showTracks", "update": "mapMode !== 'Whale Migration Flow'" },
+    { "name": "showFlow", "update": "mapMode !== 'Whale Migration Tracks'" },
+    { "name": "groupDeg", "value": 15 },
+    { "name": "flowCurve", "value": 0.15 },
+    { "name": "headRatio", "value": 2.5 },
+    { "name": "lightness", "value": 60 },
+    { "name": "trackLightness", "value": 82 },
+    { "name": "dotSize", "value": 14 },
+    { "name": "lineWidth", "value": 1.2 },
+    { "name": "spikeDeg", "value": 4 },
+    { "name": "gapDeg", "value": 15 }
+  ],
+  "projections": [
+    {
+      "name": "projection",
+      "type": "equirectangular",
+      "rotate": [-130, 0, 0],
+      "center": [0, -38],
+      "scale": 400,
+      "translate": [450, 325],
+      "clipExtent": [[0, 0], [900, 650]]
+    }
+  ],
+  "data": [
+    {
+      "name": "countries",
+      "url": "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_110m_admin_0_countries.geojson",
+      "format": { "type": "json", "property": "features" }
+    },
+    {
+      "name": "raw",
+      "url": "https://raw.githubusercontent.com/kyledeocampo/FIT3179-Australian-Marine-Life/refs/heads/main/data/AML%20-%20Whale%20Migration%20Flow.csv",
+      "format": {
+        "type": "csv",
+        "parse": {
+          "Latitude": "number",
+          "Longitude": "number",
+          "Origin Latitude": "number",
+          "Origin Longitude": "number",
+          "Final Latitude": "number",
+          "Final Longitude": "number"
+        }
+      },
+      "transform": [
+        {
+          "type": "filter",
+          "expr": "isValid(datum.Latitude) && isValid(datum.Longitude) && isValid(datum['Origin Latitude']) && isValid(datum['Origin Longitude']) && isValid(datum['Final Latitude']) && isValid(datum['Final Longitude'])"
+        },
+        {
+          "type": "formula",
+          "as": "timestamp",
+          "expr": "timeParse(datum['Date/Time'], '%d/%m/%Y %H:%M')"
+        },
+        {
+          "type": "window",
+          "groupby": ["Whale ID"],
+          "sort": { "field": "timestamp", "order": "ascending" },
+          "ops": ["row_number"],
+          "as": ["seq"]
+        }
+      ]
+    },
+    {
+      "name": "whales",
+      "source": "raw",
+      "transform": [
+        {
+          "type": "aggregate",
+          "groupby": [
+            "Species",
+            "Whale ID",
+            "Origin Latitude",
+            "Origin Longitude",
+            "Final Latitude",
+            "Final Longitude"
+          ],
+          "ops": ["count"],
+          "fields": [null],
+          "as": ["nPoints"]
+        },
+        { "type": "formula", "as": "oLatKey", "expr": "round(datum['Origin Latitude'] / groupDeg)" },
+        { "type": "formula", "as": "oLonKey", "expr": "round(datum['Origin Longitude'] / groupDeg)" },
+        { "type": "formula", "as": "fLatKey", "expr": "round(datum['Final Latitude'] / groupDeg)" },
+        { "type": "formula", "as": "fLonKey", "expr": "round(datum['Final Longitude'] / groupDeg)" }
+      ]
+    },
+    {
+      "name": "routes",
+      "source": "whales",
+      "transform": [
+        {
+          "type": "aggregate",
+          "groupby": ["Species", "oLatKey", "oLonKey", "fLatKey", "fLonKey"],
+          "ops": ["count", "mean", "mean", "mean", "mean"],
+          "fields": [
+            null,
+            "Origin Latitude",
+            "Origin Longitude",
+            "Final Latitude",
+            "Final Longitude"
+          ],
+          "as": ["nTracks", "oLat", "oLon", "fLat", "fLon"]
+        },
+        {
+          "type": "window",
+          "sort": { "field": "Species" },
+          "ops": ["dense_rank"],
+          "as": ["spIdx"]
+        },
+        {
+          "type": "formula",
+          "as": "hue",
+          "expr": "[205, 30, 330, 130, 275, 50][(datum.spIdx - 1) % 6]"
+        },
+        {
+          "type": "formula",
+          "as": "color",
+          "expr": "'hsl(' + datum.hue + ',100%,' + lightness + '%)'"
+        },
+        { "type": "geopoint", "projection": "projection", "fields": ["oLon", "oLat"], "as": ["ox", "oy"] },
+        { "type": "geopoint", "projection": "projection", "fields": ["fLon", "fLat"], "as": ["fx", "fy"] },
+        {
+          "type": "filter",
+          "expr": "isValid(datum.ox) && isValid(datum.oy) && isValid(datum.fx) && isValid(datum.fy)"
+        },
+        {
+          "type": "formula",
+          "as": "cx",
+          "expr": "(datum.ox + datum.fx) / 2 - (datum.fy - datum.oy) * flowCurve"
+        },
+        {
+          "type": "formula",
+          "as": "cy",
+          "expr": "(datum.oy + datum.fy) / 2 + (datum.fx - datum.ox) * flowCurve"
+        },
+        {
+          "type": "formula",
+          "as": "flowPath",
+          "expr": "'M' + datum.ox + ',' + datum.oy + 'Q' + datum.cx + ',' + datum.cy + ' ' + datum.fx + ',' + datum.fy"
+        },
+        {
+          "type": "formula",
+          "as": "angle",
+          "expr": "atan2(datum.fx - datum.cx, -(datum.fy - datum.cy)) * 180 / PI"
+        },
+        {
+          "type": "collect",
+          "sort": { "field": "nTracks", "order": "descending" }
+        }
+      ]
+    },
+    {
+      "name": "speciesList",
+      "source": "routes",
+      "transform": [
+        { "type": "aggregate", "groupby": ["Species", "hue", "color"] }
+      ]
+    },
+    {
+      "name": "tracks",
+      "source": "raw",
+      "transform": [
+        {
+          "type": "window",
+          "groupby": ["Whale ID"],
+          "sort": { "field": "seq", "order": "ascending" },
+          "ops": ["count"],
+          "fields": [null],
+          "frame": [null, null],
+          "as": ["nTrackPoints"]
+        },
+        {
+          "type": "window",
+          "groupby": ["Whale ID"],
+          "sort": { "field": "seq" },
+          "ops": ["lag", "lag", "lead", "lead"],
+          "fields": ["Latitude", "Longitude", "Latitude", "Longitude"],
+          "params": [1, 1, 1, 1],
+          "as": ["pLat", "pLon", "nLat", "nLon"]
+        },
+        {
+          "type": "formula",
+          "as": "dPrev",
+          "expr": "isValid(datum.pLat) ? sqrt(pow(datum.Latitude - datum.pLat, 2) + pow(min(abs(datum.Longitude - datum.pLon), 360 - abs(datum.Longitude - datum.pLon)), 2)) : 0"
+        },
+        {
+          "type": "formula",
+          "as": "dNext",
+          "expr": "isValid(datum.nLat) ? sqrt(pow(datum.Latitude - datum.nLat, 2) + pow(min(abs(datum.Longitude - datum.nLon), 360 - abs(datum.Longitude - datum.nLon)), 2)) : 0"
+        },
+        {
+          "type": "filter",
+          "expr": "spikeDeg <= 0 || !(datum.dPrev > spikeDeg && datum.dNext > spikeDeg)"
+        },
+        {
+          "type": "window",
+          "groupby": ["Whale ID"],
+          "sort": { "field": "seq" },
+          "ops": ["lag", "lag"],
+          "fields": ["Latitude", "Longitude"],
+          "params": [1, 1],
+          "as": ["qLat", "qLon"]
+        },
+        {
+          "type": "formula",
+          "as": "dGap",
+          "expr": "isValid(datum.qLat) ? sqrt(pow(datum.Latitude - datum.qLat, 2) + pow(min(abs(datum.Longitude - datum.qLon), 360 - abs(datum.Longitude - datum.qLon)), 2)) : 0"
+        },
+        { "type": "geopoint", "projection": "projection", "fields": ["Longitude", "Latitude"], "as": ["px", "py"] },
+        { "type": "filter", "expr": "isValid(datum.px) && isValid(datum.py)" },
+        {
+          "type": "lookup",
+          "from": "speciesList",
+          "key": "Species",
+          "fields": ["Species"],
+          "values": ["hue"],
+          "as": ["hue"]
+        },
+        {
+          "type": "formula",
+          "as": "trackColor",
+          "expr": "'hsl(' + datum.hue + ',100%,' + trackLightness + '%)'"
+        },
+        {
+          "type": "filter",
+          "expr": "datum.seq <= max(1, ceil((trackProgress / 100) * datum.nTrackPoints))"
+        }
+      ]
+    }
+  ],
+  "scales": [
+    {
+      "name": "speciesColor",
+      "type": "ordinal",
+      "domain": { "data": "speciesList", "field": "Species" },
+      "range": { "data": "speciesList", "field": "color" }
+    },
+    {
+      "name": "lineSize",
+      "type": "linear",
+      "domain": { "data": "routes", "field": "nTracks" },
+      "range": [4, 14],
+      "zero": false
+    }
+  ],
+  "legends": [
+    {
+      "fill": "speciesColor",
+      "orient": "top-left",
+      "offset": 10,
+      "symbolType": "circle",
+      "symbolSize": 140,
+      "labelColor": "#ffffff",
+      "labelFontSize": 12
+    }
+  ],
+  "marks": [
+    {
+      "type": "shape",
+      "name": "land",
+      "from": { "data": "countries" },
+      "encode": {
+        "update": {
+          "fill": { "value": "#1a1a1a" },
+          "stroke": { "value": "#555555" },
+          "strokeWidth": { "value": 0.6 }
+        }
+      },
+      "transform": [{ "type": "geoshape", "projection": "projection" }]
+    },
+    {
+      "type": "path",
+      "name": "flowLines",
+      "from": { "data": "routes" },
+      "interactive": { "signal": "showFlow" },
+      "encode": {
+        "update": {
+          "path": { "field": "flowPath" },
+          "fill": { "value": null },
+          "stroke": { "field": "color" },
+          "strokeWidth": { "scale": "lineSize", "field": "nTracks" },
+          "strokeOpacity": { "signal": "showFlow ? 0.9 : 0" },
+          "strokeCap": { "value": "butt" },
+          "tooltip": {
+            "signal": "{'Species': datum.Species, 'Tracks': datum.nTracks}"
+          }
+        },
+        "hover": {
+          "strokeOpacity": { "signal": "showFlow ? 1 : 0" }
+        }
+      }
+    },
+    {
+      "type": "symbol",
+      "name": "destinationArrows",
+      "from": { "data": "routes" },
+      "interactive": { "signal": "showFlow" },
+      "encode": {
+        "update": {
+          "x": { "field": "fx" },
+          "y": { "field": "fy" },
+          "shape": { "value": "triangle-up" },
+          "angle": { "field": "angle" },
+          "size": { "signal": "pow(headRatio * scale('lineSize', datum.nTracks), 2)" },
+          "fill": { "field": "color" },
+          "fillOpacity": { "value": 0.9 },
+          "stroke": { "value": null },
+          "opacity": { "signal": "showFlow ? 1 : 0" },
+          "tooltip": {
+            "signal": "{'Species': datum.Species, 'Tracks': datum.nTracks}"
+          }
+        },
+        "hover": {
+          "stroke": { "value": "#ffffff" },
+          "strokeWidth": { "value": 1.5 }
+        }
+      }
+    },
+    {
+      "type": "group",
+      "name": "trackLines",
+      "from": {
+        "facet": { "name": "whaleTrack", "data": "tracks", "groupby": ["Whale ID"] }
+      },
+      "interactive": false,
+      "marks": [
+        {
+          "type": "line",
+          "from": { "data": "whaleTrack" },
+          "interactive": false,
+          "encode": {
+            "update": {
+              "x": { "field": "px" },
+              "y": { "field": "py" },
+              "defined": { "signal": "datum.dGap <= gapDeg" },
+              "stroke": { "field": "trackColor" },
+              "strokeWidth": { "signal": "lineWidth" },
+              "strokeOpacity": { "signal": "showTracks ? 0.8 : 0" },
+              "strokeJoin": { "value": "round" }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "symbol",
+      "name": "trackDots",
+      "from": { "data": "tracks" },
+      "interactive": { "signal": "showTracks" },
+      "encode": {
+        "update": {
+          "x": { "field": "px" },
+          "y": { "field": "py" },
+          "shape": { "value": "circle" },
+          "size": { "signal": "dotSize" },
+          "fill": { "field": "trackColor" },
+          "fillOpacity": { "value": 0.85 },
+          "stroke": { "value": null },
+          "opacity": { "signal": "showTracks ? 1 : 0" },
+          "tooltip": {
+            "signal": "{'Species': datum.Species, 'Whale ID': datum['Whale ID'], 'Date/Time': datum['Date/Time'], 'Lat': format(datum.Latitude, '.2f'), 'Lon': format(datum.Longitude, '.2f')}"
+          }
+        },
+        "hover": {
+          "stroke": { "value": "#ffffff" },
+          "strokeWidth": { "value": 1.5 },
+          "fillOpacity": { "value": 1 }
+        }
+      }
+    }
+  ]
+}

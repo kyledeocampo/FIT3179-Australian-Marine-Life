@@ -18,6 +18,9 @@
   <!-- CSS file -->
   <link rel="stylesheet" type="text/css" href="css/styles.css" media="all">
   
+  <!-- Google Fonts: Bangers -->
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&display=swap" rel="stylesheet">
+
 </head>
 
 <body>
@@ -25,9 +28,9 @@
   <div class="page">
 
     <!-- pure grid group -->
-    <div class="pure-g">
+    <div class="pure-g1">
       <div class="pure-u-1-1">
-        <h1>Australian Marine Life</h1>
+        <h1 style="font-family: 'Bangers';font-size: 100px;">Australian Marine Life</h1>
       </div>
     </div>
     <!-- end pure grid group -->
@@ -35,11 +38,15 @@
     <!-- pure grid group -->
     <div class="pure-g">
       <div class="pure-u-1-1">
+        <div style="background-color: white; border: 2px solid white; padding: 10px; display: inline-block">
         <h1>Whales</h1>
       </div>
+      </div>
     </div>
+    
     <!-- end pure grid group -->
-
+    <section id="whales" class="topic-section">
+    <img class="bg-wave" src="./images/wave.svg" alt="Cartoon wave" aria-hidden="true">
     <!-- pure grid group -->
     <div class="pure-g">
       <div class="pure-u-1-2">
@@ -50,6 +57,9 @@
             dolore magna aliqua. Massa sapien faucibus et molestie ac feugiat sed. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et
             dolore magna aliqua. Massa sapien faucibus et molestie ac feugiat sed. </p>
         </div>
+      </div>
+      <div class="pure-u-1-1">
+        <div id="vis1" class="vis-container"></div>
       </div>
     </div>
     <!-- end pure grid group -->
@@ -91,7 +101,9 @@
       </div>
     </div>
     <!-- end pure grid group -->
-  
+    </section>
+    <section id="dolphins" class="topic-section">
+    <img class="bg-wave" src="./images/wave.svg" alt="Cartoon wave" aria-hidden="true">
     <!-- pure grid group -->
     <div class="pure-g">
       <div class="pure-u-1-1">
@@ -133,7 +145,9 @@
       </div>
     </div>
     <!-- end pure grid group -->
-
+    </section>
+    <section id="sea turtles" class="topic-section">
+    <img class="bg-wave" src="./images/wave.svg" alt="Cartoon wave" aria-hidden="true">
     <!-- pure grid group -->
     <div class="pure-g">
       <div class="pure-u-1-1">
@@ -167,7 +181,7 @@
       </div>
     </div>
     <!-- end pure grid group -->
-
+    
     <!-- pure grid group -->
     <div class="pure-g">
       <div class="pure-u-1-1">
@@ -175,7 +189,9 @@
       </div>
     </div>
     <!-- end pure grid group -->
-
+    </section>
+    <section id="sharks" class="topic-section">
+    <img class="bg-wave" src="./images/wave.svg" alt="Cartoon wave" aria-hidden="true">
     <!-- pure grid group -->
     <div class="pure-g">
       <div class="pure-u-1-1">
@@ -226,10 +242,11 @@
       </div>
     </div>
     <!-- end pure grid group -->
-
+    </section>
   </div> <!-- end page -->
   
   <script type="text/javascript">
+    var specVis1 = "./js/whaleflow.json";
     var specVis2 = "./js/whaleradialbar.json";
     var specVis3 = "./js/whalepictogram.json";
     var specVis4 = "./js/dolphinbehaviourbin.json";
@@ -239,6 +256,10 @@
     var specVis8 = "./js/sharkdotmap.json";
     var specVis9 = "./js/sharkwaffle.json";
     var specVis10 = "./js/sharkradar.json";
+
+    vegaEmbed('#vis1', specVis1, { "actions": false }).then(function (result) {
+      // Access the Vega view instance (https://vega.github.io/vega/docs/api/view/) as result.view
+    }).catch(console.error);
 
     vegaEmbed('#vis2', specVis2, { "actions": false }).then(function (result) {
       // Access the Vega view instance (https://vega.github.io/vega/docs/api/view/) as result.view

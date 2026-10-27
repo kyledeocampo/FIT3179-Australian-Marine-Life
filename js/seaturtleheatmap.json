@@ -1,11 +1,11 @@
 {
     "$schema": "https://vega.github.io/schema/vega/v6.json",
     "description": "Queensland sea turtle nesting localities as a proportional circular symbol map. Circle area is proportional to the nesting score; colour shows the highest beach significance in each locality.",
-    "width": 900,
+    "width": 1000,
     "height": 650,
     "padding": 0,
     "autosize": "none",
-    "background": "#000000",
+    "background": "#ffffff",
   
     "signals": [
       {"name": "maxCircleArea", "value": 2400},
@@ -33,14 +33,14 @@
     "data": [
       {
         "name": "countries",
-        "url": "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_50m_admin_0_countries.geojson",
-        "format": {"type": "json", "property": "features"},
-        "transform": [
-          {"type": "filter", "expr": "datum.properties.ADMIN === 'Australia' || datum.properties.ADMIN === 'Papua New Guinea'"},
-          {"type": "geoshape", "projection": "projection", "as": "shape"}
-        ]
+        "url": "https://raw.githubusercontent.com/kyledeocampo/FIT3179-Australian-Marine-Life/refs/heads/main/js/ne_50m_countries_states.json",
+        "format": { "type": "topojson", "feature": "ne_50m_admin_0_countries" }
       },
-  
+      {
+        "name": "states",
+        "url": "https://raw.githubusercontent.com/kyledeocampo/FIT3179-Australian-Marine-Life/refs/heads/main/js/ne_50m_countries_states.json",
+        "format": { "type": "topojson", "feature": "ne_50m_admin_1_states_provinces" }
+      },
       {
         "name": "nesting",
         "url": "https://raw.githubusercontent.com/kyledeocampo/FIT3179-Australian-Marine-Life/refs/heads/main/data/AML%20-%20Sea%20Turtle%20Nesting%20Data.csv",
@@ -133,14 +133,14 @@
     "legends": [
       {
         "fill": "significanceColor",
-        "title": "Highest beach significance",
+        "title": "Breeding significance",
         "orient": "bottom-left",
         "offset": 20,
         "symbolType": "circle",
         "symbolSize": 140,
         "symbolOpacity": 0.7,
-        "titleColor": "#ffffff",
-        "labelColor": "#ffffff"
+        "titleColor": "#000000",
+        "labelColor": "#000000"
       },
       {
         "size": "sizeScale",
@@ -149,8 +149,8 @@
         "offset": 20,
         "values": [1, 5, 20, 60, 120],
         "rowPadding": 6,
-        "titleColor": "#ffffff",
-        "labelColor": "#ffffff",
+        "titleColor": "#000000",
+        "labelColor": "#000000",
         "encode": {
           "symbols": {
             "update": {
@@ -168,17 +168,29 @@
       {
         "type": "shape",
         "name": "land",
-        "from": {"data": "countries"},
+        "from": { "data": "countries" },
         "encode": {
           "update": {
-            "shape": {"field": "shape"},
-            "fill": {"value": "#1a1a1a"},
-            "stroke": {"value": "#555555"},
-            "strokeWidth": {"value": 0.8}
+            "fill": { "value": "#ffffff" },
+            "stroke": { "value": "#000000" },
+            "strokeWidth": { "value": 0.8 }
           }
-        }
+        },
+        "transform": [{ "type": "geoshape", "projection": "projection" }]
       },
-  
+      {
+        "type": "shape",
+        "name": "landstate",
+        "from": { "data": "states" },
+        "encode": {
+          "update": {
+            "fill": { "value": null },
+            "stroke": { "value": "#000000" },
+            "strokeWidth": { "value": 0.3 }
+          }
+        },
+        "transform": [{ "type": "geoshape", "projection": "projection" }]
+      },
       {
         "type": "symbol",
         "name": "nestingCircles",
@@ -195,7 +207,7 @@
             "strokeOpacity": {"value": 0.9},
             "strokeWidth": {"value": 0.8},
             "tooltip": {
-              "signal": "{'Locality': datum.name, 'Nesting score': datum.score, 'Beach records': datum.beaches, 'Highest significance': datum.topLabel}"
+              "signal": "{'Nesting locality': datum.name, 'Calculated nesting score': datum.score, 'Significance to turtle breeding': datum.topLabel}"
             }
           }
         }

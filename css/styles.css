@@ -61,7 +61,10 @@ body *{
   }
   
   .pure-g1{
-  margin-bottom: 0px
+  margin-bottom: 50px;
+  display: flex;
+  flex-flow: row wrap;
+  align-content: flex-start;
   }
 
   .pure-g {
@@ -70,4 +73,9 @@ body *{
   
   .small-font {
 	font-size: 14px;
+  }
+
+  .vis-center {
+    display: flex;
+    justify-content: center;
   }

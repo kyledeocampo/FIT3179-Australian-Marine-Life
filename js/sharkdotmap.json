@@ -1,11 +1,11 @@
 {
     "$schema": "https://vega.github.io/schema/vega/v6.json",
     "description": "Australian shark incidents as a dot map, coloured by shark species.",
-    "width": 900,
-    "height": 650,
+    "width": 1000,
+    "height": 700,
     "padding": 0,
     "autosize": "none",
-    "background": "#000000",
+    "background": "#ffffff",
   
     "signals": [
       {"name": "dotSize", "value": 45}
@@ -25,14 +25,14 @@
     "data": [
       {
         "name": "countries",
-        "url": "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_110m_admin_0_countries.geojson",
-        "format": {"type": "json", "property": "features"},
-        "transform": [
-          {"type": "filter", "expr": "datum.properties.ADMIN === 'Australia'"},
-          {"type": "geoshape", "projection": "projection", "as": "shape"}
-        ]
+        "url": "https://raw.githubusercontent.com/kyledeocampo/FIT3179-Australian-Marine-Life/refs/heads/main/js/ne_50m_countries_states.json",
+        "format": { "type": "topojson", "feature": "ne_50m_admin_0_countries" }
       },
-  
+      {
+        "name": "states",
+        "url": "https://raw.githubusercontent.com/kyledeocampo/FIT3179-Australian-Marine-Life/refs/heads/main/js/ne_50m_countries_states.json",
+        "format": { "type": "topojson", "feature": "ne_50m_admin_1_states_provinces" }
+      },
       {
         "name": "incidents",
         "url": "data/AML%20-%20Australian%20Shark-Incident%20Database%20Public%20Version.csv",
@@ -89,26 +89,38 @@
         "offset": 20,
         "symbolType": "circle",
         "symbolSize": 140,
-        "titleColor": "#ffffff",
-        "labelColor": "#ffffff"
+        "titleColor": "#000000",
+        "labelColor": "#000000"
       }
     ],
   
     "marks": [
       {
         "type": "shape",
-        "name": "australia",
-        "from": {"data": "countries"},
+        "name": "land",
+        "from": { "data": "countries" },
         "encode": {
           "update": {
-            "shape": {"field": "shape"},
-            "fill": {"value": "#1a1a1a"},
-            "stroke": {"value": "#555555"},
-            "strokeWidth": {"value": 0.8}
+            "fill": { "value": "#ffffff" },
+            "stroke": { "value": "#000000" },
+            "strokeWidth": { "value": 0.8 }
           }
-        }
+        },
+        "transform": [{ "type": "geoshape", "projection": "projection" }]
       },
-  
+      {
+        "type": "shape",
+        "name": "landstate",
+        "from": { "data": "states" },
+        "encode": {
+          "update": {
+            "fill": { "value": null },
+            "stroke": { "value": "#000000" },
+            "strokeWidth": { "value": 0.3 }
+          }
+        },
+        "transform": [{ "type": "geoshape", "projection": "projection" }]
+      },
       {
         "type": "symbol",
         "name": "incidentDots",
@@ -124,7 +136,7 @@
             "stroke": {"value": "#000000"},
             "strokeWidth": {"value": 0.4},
             "tooltip": {
-              "signal": "{'Species': datum.species, 'Recorded as': datum['Shark.common.name'], 'Year': datum['Incident.year'], 'State': datum.State, 'Location': datum.Location, 'Injury': datum['Victim.injury']}"
+              "signal": "{'Species': datum.species, 'Recorded year': datum['Incident.year'], 'Location': datum.Location, 'Result of incident': datum['Victim.injury']}"
             }
           },
           "hover": {
